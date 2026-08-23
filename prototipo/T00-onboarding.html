@@ -84,15 +84,18 @@
   .t0-spent { opacity: .5; pointer-events: none; filter: saturate(.5); transition: opacity var(--aj-dur) var(--aj-ease); }
 
   /* Chip de documento dentro da bolha do usuário */
-  .t0-doc { display: flex; align-items: center; gap: var(--aj-3); }
-  .t0-doc__thumb {
-    width: 38px; height: 38px; flex: 0 0 38px;
-    border-radius: var(--aj-2);
-    background: rgba(255,255,255,.14);
-    display: grid; place-items: center;
-    font-size: var(--aj-fs-lg);
+  /* Foto enviada: a bolha vira moldura da imagem, como num app de mensagem */
+  .aj-msg-user.t0-foto { padding: var(--aj-1); max-width: 66%; }
+  .t0-foto__img {
+    display: block; width: 100%; height: auto;
+    border-radius: 16px;
   }
-  .t0-doc__sub { font-size: var(--aj-fs-sm); opacity: .7; margin-top: 1px; }
+  .t0-foto__cap {
+    display: flex; align-items: center; gap: 5px;
+    font-size: var(--aj-fs-caps);
+    padding: 6px var(--aj-2) 3px;
+    opacity: .72;
+  }
 
   /* Checklist: espaçamento entre linhas */
   .t0-checks .aj-check + .aj-check { margin-top: var(--aj-4); }
@@ -258,7 +261,8 @@
     );
     card.querySelector('[data-act="foto"]').onclick = function () {
       spend(card);
-      user('<div class="t0-doc"><div class="t0-doc__thumb">🪪</div><div><div>CRLV</div><div class="t0-doc__sub">foto enviada</div></div></div>');
+      // Mostra a foto que o cliente acabou de tirar, como num app de mensagem.
+      user('<svg class="t0-foto__img" viewBox="0 0 240 170" role="img" aria-label="Foto do CRLV do Hyundai HB20 2018, placa GDA5H72"><defs><linearGradient id="mesa" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3C4657"/><stop offset="1" stop-color="#222A38"/></linearGradient><linearGradient id="papel" x1="0" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#FFFDF6"/><stop offset="1" stop-color="#E8E2D4"/></linearGradient><filter id="sombra" x="-20%" y="-20%" width="150%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity=".45"/></filter></defs><rect width="240" height="170" fill="url(#mesa)"/><g transform="rotate(-3.2 120 85)" filter="url(#sombra)"><rect x="26" y="20" width="188" height="130" rx="3" fill="url(#papel)"/><rect x="26" y="20" width="188" height="17" rx="3" fill="#1F6B3A"/><text x="34" y="32" font-family="Helvetica,Arial,sans-serif" font-size="6.4" font-weight="700" fill="#EAF5EC" letter-spacing=".35">CERTIFICADO DE REGISTRO E LICENCIAMENTO</text><text x="34" y="49" font-family="Helvetica,Arial,sans-serif" font-size="5" fill="#8C8778" letter-spacing=".5">PLACA</text><rect x="33" y="52" width="62" height="20" rx="2.5" fill="#F3F1E8" stroke="#B9B3A2"/><rect x="33" y="52" width="62" height="6" rx="2.5" fill="#2B4C9B"/><text x="64" y="68" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="10.5" font-weight="700" fill="#23262B" letter-spacing="1.1">GDA5H72</text><text x="106" y="49" font-family="Helvetica,Arial,sans-serif" font-size="5" fill="#8C8778" letter-spacing=".5">MARCA / MODELO</text><text x="106" y="60" font-family="Helvetica,Arial,sans-serif" font-size="7.6" font-weight="600" fill="#33373D">HYUNDAI HB20</text><text x="106" y="70" font-family="Helvetica,Arial,sans-serif" font-size="6.4" fill="#5C6067">1.0 COMFORT PLUS</text><text x="34" y="86" font-family="Helvetica,Arial,sans-serif" font-size="5" fill="#8C8778" letter-spacing=".5">ANO FAB / MOD</text><text x="34" y="96" font-family="Helvetica,Arial,sans-serif" font-size="7.2" font-weight="600" fill="#33373D">2017 / 2018</text><g fill="#C6C0AE"><rect x="106" y="82" width="82" height="3.4" rx="1.7"/><rect x="106" y="90" width="66" height="3.4" rx="1.7"/><rect x="34" y="106" width="152" height="3.4" rx="1.7"/><rect x="34" y="114" width="128" height="3.4" rx="1.7"/><rect x="34" y="122" width="140" height="3.4" rx="1.7"/></g><rect x="150" y="112" width="52" height="26" rx="2" fill="#EFEADA" stroke="#CFC8B4"/><text x="176" y="128" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="5.4" fill="#9A9484">QR</text><path d="M26 20 L104 20 L52 150 L26 150 Z" fill="#fff" opacity=".13"/></g></svg><div class="t0-foto__cap">📎 CRLV · agora</div>').classList.add('t0-foto');
       lerDocumento('foto');
     };
     card.querySelector('[data-act="placa"]').onclick = function () {

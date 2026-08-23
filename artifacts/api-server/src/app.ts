@@ -53,9 +53,11 @@ if (prototipoDir) {
   });
   app.use("/app", express.static(prototipoDir, { index: false }));
 
-  // O índice é um visualizador de desenvolvimento, separado do app.
+  // O índice é um visualizador de desenvolvimento, separado do app. Precisa
+  // redirecionar em vez de servir o arquivo daqui: em "/telas" os links
+  // relativos das telas resolveriam para "/T01-chat.html", fora do mount.
   app.get("/telas", (_req, res) => {
-    res.sendFile("index.html", { root: prototipoDir });
+    res.redirect(302, "/app/index.html");
   });
 
   logger.info({ prototipoDir }, "Protótipo servido em /app");

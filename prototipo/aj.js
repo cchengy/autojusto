@@ -130,7 +130,22 @@
     '@media (max-width:520px){.ajnav .ajnav-lbl{display:none;}}'
   ].join('');
 
+  /* A barra é ferramenta de desenvolvimento, não parte do app. Só aparece
+     quando a URL pede: o índice em index.html liga as telas com "?nav=1".
+     Abrir a tela direto (/app/...) entrega o app sem cromo em volta. */
+  var NAV_FLAG = '?nav=1';
+
+  function navRequested() {
+    return /[?&]nav=/.test(global.location.search);
+  }
+
+  function withNav(file) {
+    return file + NAV_FLAG;
+  }
+
   function build() {
+    if (!navRequested()) return;
+
     var i = currentIndex();
     if (i < 0 || document.querySelector('.ajnav')) return;
 
@@ -147,11 +162,11 @@
     nav.innerHTML =
       '<a class="ajnav-home" href="index.html">◱ <span class="ajnav-lbl">Todas as telas</span></a>' +
       (prev
-        ? '<a href="' + prev.file + '">← <span class="ajnav-lbl">' + prev.id + ' ' + prev.name + '</span></a>'
+        ? '<a href="' + withNav(prev.file) + '">← <span class="ajnav-lbl">' + prev.id + ' ' + prev.name + '</span></a>'
         : '<span class="ajnav-off">←</span>') +
       '<span class="ajnav-now">' + SCREENS[i].id + '</span>' +
       (next
-        ? '<a href="' + next.file + '"><span class="ajnav-lbl">' + next.id + ' ' + next.name + '</span> →</a>'
+        ? '<a href="' + withNav(next.file) + '"><span class="ajnav-lbl">' + next.id + ' ' + next.name + '</span> →</a>'
         : '<span class="ajnav-off">→</span>');
 
     /* Seletor pra pular direto pra qualquer tela. */
@@ -160,7 +175,7 @@
     sel.setAttribute('aria-label', 'Pular para tela');
     SCREENS.forEach(function (s, k) {
       var o = document.createElement('option');
-      o.value = s.file;
+      o.value = withNav(s.file);
       o.textContent = s.id + ' · ' + s.name;
       if (k === i) o.selected = true;
       sel.appendChild(o);

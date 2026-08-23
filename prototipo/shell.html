@@ -49,7 +49,7 @@
 
 <div id="palco">
   <iframe class="camada is-on" id="a" title="Auto Justo"></iframe>
-  <iframe class="camada" id="b" title="Auto Justo" aria-hidden="true"></iframe>
+  <iframe class="camada" id="b" title="Auto Justo" aria-hidden="true" inert></iframe>
 </div>
 <div id="veu"></div>
 
@@ -99,10 +99,14 @@
       // mostraria um quadro em branco no meio da transição.
       proxima.classList.add('is-on');
       proxima.removeAttribute('aria-hidden');
+      proxima.removeAttribute('inert');
 
       var anterior = ativa();
       anterior.classList.remove('is-on');
       anterior.setAttribute('aria-hidden', 'true');
+      // Segunda trava, além do pointer-events: a camada que saiu fica inerte,
+      // para que nenhum ajuste futuro de CSS a torne clicável por engano.
+      anterior.setAttribute('inert', '');
 
       frente = 1 - frente;
       veu.classList.remove('is-on');

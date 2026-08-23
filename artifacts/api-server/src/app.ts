@@ -45,6 +45,18 @@ app.use("/api", router);
 const prototipoDir = resolvePrototipoDir();
 const siteDir = resolveSiteDir();
 
+/**
+ * HTML precisa revalidar a cada visita. Sem isto o navegador de quem já abriu
+ * o site guarda a versão antiga do shell e de cada tela, e uma correção
+ * publicada depois simplesmente não chega. Os demais arquivos, com nome
+ * estável, seguem com o cache padrão.
+ */
+function semCacheDeHtml(res: express.Response, caminho: string): void {
+  if (caminho.endsWith(".html")) {
+    res.setHeader("Cache-Control", "no-cache");
+  }
+}
+
 if (prototipoDir) {
   // "/app/" serve o shell: uma página só que carrega as telas em camadas e as
   // troca por fusão, em vez de recarregar a página a cada passo.
@@ -54,7 +66,11 @@ if (prototipoDir) {
   // do iframe resolveria para "/T00-onboarding.html", fora deste mount.
   app.use(
     "/app",
-    express.static(prototipoDir, { index: "shell.html", redirect: true }),
+    express.static(prototipoDir, {
+      index: "shell.html",
+      redirect: true,
+      setHeaders: semCacheDeHtml,
+    }),
   );
 
   // O índice é um visualizador de desenvolvimento, separado do app. Precisa
@@ -72,7 +88,7 @@ if (prototipoDir) {
 }
 
 if (siteDir) {
-  app.use("/", express.static(siteDir));
+  app.use("/", express.static(siteDir, { setHeaders: semCacheDeHtml }));
   logger.info({ siteDir }, "Landing servida em /");
 } else {
   logger.warn("Pasta site/ não encontrada; a landing fica indisponível");

@@ -241,6 +241,40 @@
     Array.prototype.forEach.call(todos, function (el) {
       var pai = el.parentNode;
       if (pai && pai.lastElementChild !== el) pai.appendChild(el);
+
+      /* Rola até a pílula na primeira vez que ela fica visível.
+         Sem isto ela costuma nascer abaixo da dobra: a tela chama scrollDown
+         durante a animação, e só depois o rodapé é revelado e movido para o
+         fim. A rolagem tinha parado numa altura que ainda não incluía ele, e
+         o passo seguinte ficava fora de alcance. */
+      if (el.dataset.ajRolado) return;
+      if (el.hidden || el.offsetParent === null) return;
+      el.dataset.ajRolado = '1';
+
+      var rolo = el.closest ? el.closest('.aj-scroll') : null;
+      if (!rolo) return;
+
+      function aoFim(suave) {
+        var alvo = rolo.scrollHeight - rolo.clientHeight;
+        if (alvo <= rolo.scrollTop) return;
+        if (suave && rolo.scrollTo) rolo.scrollTo({ top: alvo, behavior: 'smooth' });
+        else rolo.scrollTop = alvo;
+      }
+
+      /* A pílula costuma nascer no fim de uma animação, e nesse instante a
+         altura da rolagem ainda muda: a classe é aplicada depois do elemento
+         entrar, o que aumenta padding e margem. Uma rolagem só, disparada cedo,
+         para antes do fim e deixa a pílula por baixo da barra de input — ali
+         ela aparece mas não recebe clique, porque o ponto pertence à barra.
+         Por isso rolamos uma vez de forma suave e reasseveramos depois. */
+      requestAnimationFrame(function () { aoFim(true); });
+      [420, 900].forEach(function (ms) {
+        setTimeout(function () {
+          var r = el.getBoundingClientRect();
+          var rr = rolo.getBoundingClientRect();
+          if (r.bottom > rr.bottom - 4) aoFim(false);
+        }, ms);
+      });
     });
   }
 

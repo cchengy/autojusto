@@ -49,6 +49,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 - Logo e wordmark ficam embutidos em base64 dentro do `tokens.css`, que o build inlineia uma vez por tela. Trocar por um asset maior multiplica por 9 no arquivo final (hoje 577 KB).
 - Para o wordmark, use sempre `prototipo/assets/wordmark.svg`. Não recrie "Auto Justo" com fonte itálica qualquer — não bate com o logo. No `mockup-sandbox`, `.font-display` (Plus Jakarta Sans) serve para títulos, nunca para o wordmark.
 - O protótipo usa Inter; o `mockup-sandbox` carrega o bundle de fontes do Replit. São dois sistemas separados de propósito — não tente unificar sem resolver o problema do offline.
+- No `mockup-sandbox`, o Vite roda com `base: BASE_PATH` (`/__mockup`). Referência a asset de `public/` escrita como `/logo-icon.png` no JSX **não** recebe o prefixo e quebra: use `` `${import.meta.env.BASE_URL}logo-icon.png` ``. Por isso o favicon do `index.html` é data URI — não depende de base nem de publicDir.
 
 ## Pointers
 

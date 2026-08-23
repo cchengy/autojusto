@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auto Justo</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<style>
+  /* O shell é só a moldura: o desenho de cada tela vem do tokens.css delas.
+     Duas camadas empilhadas fazem a troca por fusão, para a jornada parecer
+     um app contínuo em vez de nove páginas recarregando. */
+  html, body {
+    margin: 0; height: 100%;
+    background: #cbd5e1;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+
+  #palco { position: fixed; inset: 0; }
+
+  .camada {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: 0;
+    opacity: 0;
+    transition: opacity 260ms cubic-bezier(.22,.61,.36,1);
+  }
+  .camada.is-on { opacity: 1; }
+
+  /* Enquanto a próxima tela carrega, um véu curto evita o salto branco. */
+  #veu {
+    position: fixed; inset: 0;
+    background: #cbd5e1;
+    opacity: 0; pointer-events: none;
+    transition: opacity 160ms linear;
+  }
+  #veu.is-on { opacity: .55; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .camada, #veu { transition-duration: 1ms; }
+  }
+</style>
+</head>
+<body>
+
+<div id="palco">
+  <iframe class="camada is-on" id="a" title="Auto Justo"></iframe>
+  <iframe class="camada" id="b" title="Auto Justo" aria-hidden="true"></iframe>
+</div>
+<div id="veu"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var TELAS = [
+    'T00-onboarding.html', 'T01-chat.html', 'T02-diagnostico.html',
+    'T03-oficinas.html', 'T04-perfil-oficina.html', 'T05-orcamentos.html',
+    'T06-agendamento.html', 'T07-historico.html', 'T08-emergencia.html'
+  ];
+
+  var camadas = [document.getElementById('a'), document.getElementById('b')];
+  var veu = document.getElementById('veu');
+  var frente = 0;
+  var trocando = false;
+
+  function ehTela(arquivo) {
+    return TELAS.indexOf(arquivo) >= 0;
+  }
+
+  /* Aceita "T05-orcamentos.html", "./T05...", "T05...?nav=1" */
+  function normaliza(href) {
+    if (!href) return null;
+    var limpo = href.split('#')[0].split('?')[0];
+    limpo = limpo.replace(/^\.?\//, '');
+    return ehTela(limpo) ? limpo : null;
+  }
+
+  /* A tela viva é sempre a camada da frente. */
+  function ativa() { return camadas[frente]; }
+  function reserva() { return camadas[1 - frente]; }
+
+  function trocar(arquivo, semHistorico) {
+    if (trocando || !ehTela(arquivo)) return;
+    trocando = true;
+    veu.classList.add('is-on');
+
+    var proxima = reserva();
+
+    proxima.onload = function () {
+      proxima.onload = null;
+      instrumenta(proxima);
+
+      // Só revela depois que o documento novo está pronto: sem isso a fusão
+      // mostraria um quadro em branco no meio da transição.
+      proxima.classList.add('is-on');
+      proxima.removeAttribute('aria-hidden');
+
+      var anterior = ativa();
+      anterior.classList.remove('is-on');
+      anterior.setAttribute('aria-hidden', 'true');
+
+      frente = 1 - frente;
+      veu.classList.remove('is-on');
+
+      setTimeout(function () {
+        // Descarrega a camada que saiu para as animações dela pararem de rodar.
+        try { anterior.src = 'about:blank'; } catch (e) {}
+        trocando = false;
+      }, 300);
+
+      if (!semHistorico) {
+        history.pushState({ tela: arquivo }, '', '#' + arquivo);
+      }
+      document.title = 'Auto Justo';
+    };
+
+    proxima.src = arquivo;
+  }
+
+  /* Intercepta a navegação DENTRO da tela antes que o aj.js a execute.
+     O aj.js escuta clique na fase de bolha e faz location.href = destino, o
+     que recarregaria o iframe inteiro e quebraria a sensação de app único.
+     Escutando na fase de captura, chegamos primeiro e assumimos a troca. */
+  function instrumenta(frame) {
+    var doc;
+    try { doc = frame.contentDocument; } catch (e) { return; }
+    if (!doc) return;
+
+    doc.addEventListener('click', function (e) {
+      var alvo = e.target;
+      var destino = null;
+
+      var comGo = alvo.closest ? alvo.closest('[data-aj-go]') : null;
+      if (comGo) destino = normaliza(comGo.getAttribute('data-aj-go'));
+
+      if (!destino) {
+        var link = alvo.closest ? alvo.closest('a[href]') : null;
+        if (link) destino = normaliza(link.getAttribute('href'));
+      }
+
+      if (!destino) {
+        // Rodapés "Continua em T-0N": o aj.js liga o clique no próprio
+        // elemento, então precisamos reconhecer o texto aqui também.
+        var no = alvo.closest ? alvo.closest('[role="link"]') : null;
+        var m = no && /Continua em\s+(T-?\d\d)/i.exec(no.textContent || '');
+        if (m) {
+          var id = m[1].replace('-', '');
+          for (var i = 0; i < TELAS.length; i++) {
+            if (TELAS[i].indexOf(id) === 0) { destino = TELAS[i]; break; }
+          }
+        }
+      }
+
+      if (!destino) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      trocar(destino);
+    }, true);
+  }
+
+  /* Voltar do navegador anda para trás na jornada. */
+  window.addEventListener('popstate', function (e) {
+    var arquivo = (e.state && e.state.tela) || primeira();
+    trocar(arquivo, true);
+  });
+
+  function primeira() {
+    var hash = (location.hash || '').replace(/^#/, '');
+    return ehTela(hash) ? hash : TELAS[0];
+  }
+
+  var inicial = primeira();
+  camadas[0].onload = function () {
+    camadas[0].onload = null;
+    instrumenta(camadas[0]);
+    history.replaceState({ tela: inicial }, '', '#' + inicial);
+  };
+  camadas[0].src = inicial;
+})();
+</script>
+
+</body>
+</html>

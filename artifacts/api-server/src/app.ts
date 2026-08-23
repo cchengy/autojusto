@@ -46,12 +46,16 @@ const prototipoDir = resolvePrototipoDir();
 const siteDir = resolveSiteDir();
 
 if (prototipoDir) {
-  // "/app" abre a jornada pelo cadastro; o resto da pasta fica acessível para
-  // que aj.js e tokens.css resolvam, e para a navegação entre telas.
-  app.get("/app", (_req, res) => {
-    res.redirect(302, "/app/T00-onboarding.html");
-  });
-  app.use("/app", express.static(prototipoDir, { index: false }));
+  // "/app/" serve o shell: uma página só que carrega as telas em camadas e as
+  // troca por fusão, em vez de recarregar a página a cada passo.
+  //
+  // O shell entra como índice do diretório, e não como rota própria, porque
+  // precisa ser servido COM a barra final. Em "/app" sem barra, o src relativo
+  // do iframe resolveria para "/T00-onboarding.html", fora deste mount.
+  app.use(
+    "/app",
+    express.static(prototipoDir, { index: "shell.html", redirect: true }),
+  );
 
   // O índice é um visualizador de desenvolvimento, separado do app. Precisa
   // redirecionar em vez de servir o arquivo daqui: em "/telas" os links

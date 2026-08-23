@@ -10,6 +10,15 @@
   /* --- Locais da T-00 (não existem em tokens.css) --- */
 
   /* Botão discreto de replay, no canto do header */
+  /* Rodapé de protótipo, mesmo tratamento das outras telas */
+  .t0-next {
+    align-self: center;
+    margin-top: var(--aj-2);
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .06em;
+    color: var(--aj-text-2);
+  }
+
   .t0-replay {
     margin-left: auto;
     border: 1px solid var(--aj-border);
@@ -143,8 +152,8 @@
   <div class="aj-statusbar"><span>9:41</span><span>▮▮▮ ▾</span></div>
 
   <header class="aj-header">
-    <div class="aj-header__avatar">AJ</div>
-    <div class="aj-header__name">Auto Justo</div>
+    <div class="aj-header__avatar" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">AJ</div>
+    <div class="aj-header__name" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">Auto Justo</div>
     <button class="t0-replay" id="replay" title="Reiniciar demo">↻ replay</button>
   </header>
 
@@ -388,6 +397,13 @@
     var my = run;
     AJ.wait(420)
       .then(function () { if (my !== run) return Promise.reject('stale'); return ai('Pode falar comigo do jeito que você falaria com um amigo. O que o HB20 está fazendo?'); })
+      .then(function () {
+        if (my !== run) return Promise.reject('stale');
+        /* Sem isto a tela de cadastro vira beco sem saída: quem entra pelo
+           /app cai aqui e não tem como seguir. O aj.js transforma o texto
+           em link ao detectar o "Continua em". */
+        push('<div class="t0-next">Continua em T-01 Chat →</div>');
+      })
       .catch(swallow);
   };
 

@@ -449,3 +449,21 @@ html, body {
 
 /* Confirmação de escolha em verde, separado das ações azuis de navegação. */
 .aj-btn--confirm { background: var(--aj-success); color: #fff; }
+
+/* Foto enviada pela pessoa: a bolha vira moldura da imagem. */
+.aj-msg-user.aj-foto { padding: var(--aj-1); max-width: 68%; }
+.aj-foto__img {
+  display: block; width: 100%; height: auto;
+  aspect-ratio: 4 / 3; object-fit: cover;
+  border-radius: 16px; background: #222A38;
+}
+.aj-foto__cap {
+  display: flex; align-items: center; gap: 5px;
+  font-size: var(--aj-fs-caps);
+  padding: 6px var(--aj-2) 3px;
+  opacity: .74;
+}
+
+/* Áudio gravado de verdade: a onda vira botão de reprodução. */
+.t-audiomsg[data-src] { cursor: pointer; }
+.t-audiomsg[data-src]:hover { opacity: .9; }

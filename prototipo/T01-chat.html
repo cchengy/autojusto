@@ -185,6 +185,7 @@
     <div class="t-atts">
       <button type="button" class="t-att" id="attAudio"><b>🎤</b><i>Áudio</i></button>
       <button type="button" class="t-att" id="attFoto"><b>📷</b><i>Foto</i></button>
+      <input type="file" accept="image/*" capture="environment" id="fotoFile" hidden>
       <button type="button" class="t-att" id="attTexto"><b>⌨️</b><i>Texto</i></button>
     </div>
   </div>
@@ -284,7 +285,23 @@
     document.getElementById('attAudio').classList.remove('is-on');
   }
 
-  /* ---------- gravação simulada ---------- */
+  /* ---------- gravação de áudio ----------
+     Usa o microfone de verdade quando o navegador permite. Precisa de contexto
+     seguro: funciona em HTTPS e em localhost. Se a pessoa negar a permissão ou
+     o navegador não suportar, a interface segue igual e o áudio vira apenas a
+     representação visual, para a demonstração nunca travar. */
+  var gravador = null;
+  var pedacos = [];
+  var trilha = null;
+  var tocando = null;
+
+  function encerrarTrilha() {
+    if (trilha) {
+      trilha.getTracks().forEach(function (t) { t.stop(); });
+      trilha = null;
+    }
+  }
+
   function buildWave() {
     if (wave.children.length) return;
     for (var i = 0; i < 26; i++) {
@@ -302,19 +319,57 @@
     recTimer = setInterval(function () {
       s++; timerEl.textContent = '0:' + (s < 10 ? '0' : '') + s;
     }, 1000);
+
+    if (!navigator.mediaDevices || !window.MediaRecorder) return;
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s2) {
+      /* A pessoa pode ter parado antes de a permissão voltar. */
+      if (rowRec.hidden) { s2.getTracks().forEach(function (t) { t.stop(); }); return; }
+      trilha = s2;
+      pedacos = [];
+      gravador = new MediaRecorder(s2);
+      gravador.ondataavailable = function (e) { if (e.data && e.data.size) pedacos.push(e.data); };
+      gravador.start();
+    }).catch(function () { /* sem microfone: segue a representação visual */ });
   }
   function stopRec(silent) {
     if (recTimer) { clearInterval(recTimer); recTimer = null; }
     rowRec.hidden = true; rowNorm.hidden = false;
     document.getElementById('attAudio').classList.remove('is-on');
-    if (silent) return;
+
     var secs = timerEl.textContent;
-    var bars = '';
-    for (var i = 0; i < 14; i++) bars += '<i style="height:' + (4 + ((i * 7) % 13)) + 'px"></i>';
-    setState('B');
-    addUser('<span class="t-audiomsg">▶ <span class="t-mini">' + bars + '</span> ' + secs + '</span>');
-    closeAttach();
+
+    function publicar(url) {
+      if (silent) return;
+      var bars = '';
+      for (var i = 0; i < 14; i++) bars += '<i style="height:' + (4 + ((i * 7) % 13)) + 'px"></i>';
+      setState('B');
+      addUser('<span class="t-audiomsg"' + (url ? ' data-src="' + url + '" title="Tocar"' : '') +
+              '>▶ <span class="t-mini">' + bars + '</span> ' + secs + '</span>');
+      closeAttach();
+    }
+
+    if (gravador && gravador.state === 'recording') {
+      gravador.onstop = function () {
+        gravador = null;
+        encerrarTrilha();
+        publicar(pedacos.length ? URL.createObjectURL(new Blob(pedacos)) : null);
+      };
+      gravador.stop();
+      return;
+    }
+
+    encerrarTrilha();
+    publicar(null);
   }
+
+  /* Toca o áudio gravado ao tocar na onda. Um de cada vez. */
+  B.addEventListener('click', function (e) {
+    var alvo = e.target.closest && e.target.closest('.t-audiomsg[data-src]');
+    if (!alvo) return;
+    if (tocando) { tocando.pause(); tocando = null; }
+    tocando = new Audio(alvo.getAttribute('data-src'));
+    tocando.play().catch(function () {});
+  });
 
   /* ---------- roteiro (estado B) ---------- */
   function play() {
@@ -380,8 +435,28 @@
   });
   document.getElementById('stop').addEventListener('click', function () { stopRec(); });
 
+  /* Abre a câmera no celular e o seletor no computador. A imagem fica só
+     neste navegador: o protótipo não envia nada para lugar nenhum. */
+  var fotoFile = document.getElementById('fotoFile');
+
+  fotoFile.addEventListener('change', function () {
+    var arquivo = fotoFile.files && fotoFile.files[0];
+    if (!arquivo) return;
+    var url = URL.createObjectURL(arquivo);
+    chip.hidden = true;
+    closeAttach();
+    setState('B');
+    addUser('<img class="aj-foto__img" src="' + url + '" alt="Foto que você enviou">' +
+            '<div class="aj-foto__cap">\ud83d\udcce Foto \u00b7 agora</div>')
+      .then(function () {
+        var ultima = B.querySelector('.aj-msg-user:last-of-type');
+        if (ultima) ultima.classList.add('aj-foto');
+      });
+  });
+
   document.getElementById('attFoto').addEventListener('click', function () {
-    chip.hidden = false; closeAttach(); field.focus();
+    fotoFile.click();
+    closeAttach();
   });
   document.getElementById('chipX').addEventListener('click', function () { chip.hidden = true; });
 

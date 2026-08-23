@@ -47,9 +47,13 @@
 </head>
 <body>
 
+<!-- allow: sem isto o iframe nao recebe camera nem microfone, e a foto e o
+     audio do chat ficariam bloqueados dentro do shell. -->
 <div id="palco">
-  <iframe class="camada is-on" id="a" title="Auto Justo"></iframe>
-  <iframe class="camada" id="b" title="Auto Justo" aria-hidden="true" inert></iframe>
+  <iframe class="camada is-on" id="a" title="Auto Justo"
+          allow="camera; microphone"></iframe>
+  <iframe class="camada" id="b" title="Auto Justo" aria-hidden="true" inert
+          allow="camera; microphone"></iframe>
 </div>
 <div id="veu"></div>
 

@@ -23,9 +23,13 @@
     width: 100%; height: 100%;
     border: 0;
     opacity: 0;
+    /* Sem isto a camada de reserva, invisível mas presente e por cima no
+       empilhamento, engole todo clique destinado à tela visível.
+       opacity: 0 não desliga eventos de ponteiro. */
+    pointer-events: none;
     transition: opacity 260ms cubic-bezier(.22,.61,.36,1);
   }
-  .camada.is-on { opacity: 1; }
+  .camada.is-on { opacity: 1; pointer-events: auto; }
 
   /* Enquanto a próxima tela carrega, um véu curto evita o salto branco. */
   #veu {

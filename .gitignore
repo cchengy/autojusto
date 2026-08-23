@@ -49,6 +49,6 @@ Thumbs.db
 .local/
 
 # Protótipo — visualizadores desktop, fora do app
-prototipo/index.html
+# (index.html do protótipo volta ao repositório: é a porta de entrada de /telas)
 prototipo/autojusto-all-in-one.html
 prototipo/build-all-in-one.py

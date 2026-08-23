@@ -1,0 +1,65 @@
+/* Auto Justo — camada de marca. FONTE DA VERDADE das cores e da assinatura.
+ *
+ * As cores saem do logo (docs/brand-logo.jpeg). Nenhum artifact deve escolher
+ * paleta própria: importe este arquivo e use as variáveis.
+ *
+ *   import "@workspace/brand/tokens.css";
+ *
+ * Só define a marca. Espaçamento, tipografia de corpo e componentes ficam por
+ * conta de cada app.
+ */
+
+:root {
+  /* --- Cor da marca --- */
+  --aj-navy: #052577; /* azul-marinho — bolha do cliente, texto forte */
+  --aj-navy-deep: #03153f; /* navy pressionado */
+  --aj-blue: #0136ab; /* azul primário — botões, links, envio */
+  --aj-blue-vivid: #084db1; /* azul vivo — hover, foco, estado ativo */
+  --aj-yellow: #f8c613; /* amarelo — acento pontual, nunca fundo grande */
+  --aj-yellow-ink: #6b4e00; /* texto legível sobre amarelo claro */
+
+  /* Mesmas cores em componentes HSL, para quem usa tokens shadcn/Tailwind */
+  --aj-navy-hsl: 223 92% 24%;
+  --aj-blue-hsl: 221 99% 34%;
+  --aj-blue-vivid-hsl: 215 91% 36%;
+  --aj-yellow-hsl: 47 94% 52%;
+
+  /* --- Cor semântica: NÃO é cor de marca, não use como acento --- */
+  --aj-success: #10b981; /* só sucesso, check, confirmação */
+  --aj-warn: #e07a00; /* laranja, e não âmbar: âmbar briga com o amarelo */
+  --aj-danger: #ef4444;
+  --aj-respeito: #ec4899; /* dedicada ao Selo Respeitoso, sem outro uso */
+
+  /* --- Neutros --- */
+  --aj-bg: #f4f7fc; /* fundo da aplicação, off-white frio */
+  --aj-surface: #ffffff;
+  --aj-tint: #e9f0fc; /* fundo sutil de item selecionado */
+  --aj-border: #e2e8f0;
+  --aj-ink: #2d3748; /* texto de corpo */
+  --aj-ink-2: #94a3b8; /* texto secundário */
+
+  /* --- Assinatura --- */
+  --aj-logo: url("../assets/logo-icon.png");
+  --aj-wordmark-img: url("../assets/wordmark.svg");
+}
+
+/* O wordmark "Auto Justo" é Canva Sans Bold Italic — proprietária da Canva,
+ * sem licença de webfont. Nunca recrie com fonte substituta: use o SVG.
+ * O texto continua no DOM para leitor de tela e para busca. */
+.aj-wordmark {
+  display: block;
+  background: var(--aj-wordmark-img) left center / contain no-repeat;
+  aspect-ratio: 1344 / 212;
+  text-indent: -9999px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Ícone do app. Já é um quadrado arredondado — não recorte em círculo. */
+.aj-logo-mark {
+  background: var(--aj-logo) center / cover no-repeat;
+  border-radius: 9px;
+  aspect-ratio: 1;
+  font-size: 0;
+  color: transparent;
+}

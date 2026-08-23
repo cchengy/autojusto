@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auto Justo — confiança verificável em oficina mecânica</title>
+<meta name="description" content="Descreva o problema do carro em português comum. A IA levanta a hipótese, estima o custo com peça e mão de obra separadas e indica oficina verificada.">
+<link rel="icon" type="image/png" href="/app/assets/favicon.png">
+<!-- Fonte única da paleta: o mesmo tokens.css que o app usa, servido em /app -->
+<link rel="stylesheet" href="/app/tokens.css">
+<style>
+  html, body { background: var(--aj-bg); }
+  body { color: var(--aj-ink, var(--aj-ai-text)); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 var(--aj-6); }
+
+  /* --- Barra --- */
+  .nav {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(244,247,252,.86);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--aj-border);
+  }
+  .nav__in {
+    max-width: 1080px; margin: 0 auto;
+    padding: var(--aj-3) var(--aj-6);
+    display: flex; align-items: center; gap: var(--aj-3);
+  }
+  .nav__mark {
+    width: 34px; height: 34px; flex: 0 0 34px;
+    background: var(--aj-logo) center / cover no-repeat;
+    border-radius: 9px;
+  }
+  .nav__word { width: 116px; }
+  .nav__cta { margin-left: auto; }
+
+  .btn {
+    display: inline-block;
+    padding: var(--aj-3) var(--aj-5);
+    border-radius: var(--aj-r-pill);
+    background: var(--aj-accent);
+    color: #fff;
+    font: inherit; font-weight: 600;
+    text-decoration: none;
+    border: 0; cursor: pointer;
+    transition: background 180ms var(--aj-ease), transform 180ms var(--aj-ease);
+  }
+  .btn:hover { background: var(--aj-accent-2); transform: translateY(-1px); }
+  .btn--lg { padding: var(--aj-4) var(--aj-8); font-size: var(--aj-fs-lg); }
+  .btn--ghost {
+    background: transparent; color: var(--aj-navy);
+    border: 1px solid var(--aj-border);
+  }
+  .btn--ghost:hover { background: var(--aj-surface); }
+
+  /* --- Hero --- */
+  .hero { padding: var(--aj-10) 0 var(--aj-8); }
+  .chip {
+    display: inline-flex; align-items: center; gap: var(--aj-2);
+    background: rgba(248,198,19,.20);
+    border: 1px solid rgba(248,198,19,.55);
+    color: var(--aj-yellow-ink);
+    font-size: var(--aj-fs-sm); font-weight: 600;
+    padding: 6px var(--aj-4); border-radius: var(--aj-r-pill);
+  }
+  .chip__dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--aj-yellow);
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 60px);
+    line-height: 1.05; letter-spacing: -.03em;
+    color: var(--aj-navy);
+    margin: var(--aj-5) 0 var(--aj-4);
+    max-width: 16ch;
+  }
+  h1 .accent {
+    background: linear-gradient(180deg, transparent 66%, var(--aj-yellow) 66%);
+    padding: 0 2px;
+  }
+  .lede {
+    font-size: var(--aj-fs-lg); line-height: 1.55;
+    color: #475569; max-width: 56ch; margin: 0 0 var(--aj-6);
+  }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: var(--aj-3); }
+
+  /* --- Números --- */
+  .stats {
+    display: grid; gap: var(--aj-4);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin: var(--aj-10) 0;
+  }
+  .stat {
+    background: var(--aj-surface); border-radius: var(--aj-r-card);
+    box-shadow: var(--aj-shadow-card); padding: var(--aj-5);
+  }
+  .stat__n {
+    font-size: var(--aj-fs-hero); font-weight: 700;
+    color: var(--aj-navy); letter-spacing: -.02em; line-height: 1.1;
+  }
+  .stat__n::before {
+    content: ""; display: block;
+    width: 26px; height: 3px; border-radius: 2px;
+    background: var(--aj-yellow);
+    margin-bottom: var(--aj-3);
+  }
+  .stat__t { font-size: var(--aj-fs-sm); color: var(--aj-text-2); margin-top: var(--aj-2); line-height: 1.5; }
+
+  /* --- Seções --- */
+  section { padding: var(--aj-10) 0; }
+  .caps {
+    font-size: var(--aj-fs-caps); letter-spacing: .14em;
+    text-transform: uppercase; color: var(--aj-text-2); font-weight: 600;
+  }
+  h2 {
+    font-size: clamp(26px, 3.6vw, 38px); letter-spacing: -.02em;
+    color: var(--aj-navy); margin: var(--aj-2) 0 var(--aj-6); max-width: 22ch;
+  }
+
+  .steps { display: grid; gap: var(--aj-4); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .step {
+    background: var(--aj-surface); border-radius: var(--aj-r-card);
+    box-shadow: var(--aj-shadow-card); padding: var(--aj-5);
+  }
+  .step__n {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--aj-accent); color: #fff;
+    display: grid; place-items: center;
+    font-size: var(--aj-fs-sm); font-weight: 700;
+    margin-bottom: var(--aj-3);
+  }
+  .step__t { font-weight: 600; font-size: var(--aj-fs-body); margin-bottom: var(--aj-2); color: var(--aj-navy); }
+  .step__d { font-size: var(--aj-fs-sm); color: var(--aj-text-2); line-height: 1.6; }
+
+  /* --- Selo --- */
+  .selo {
+    background: var(--aj-surface); border-radius: 20px;
+    box-shadow: var(--aj-shadow-card); padding: var(--aj-8);
+  }
+  .selo__badge {
+    display: inline-flex; align-items: center; gap: var(--aj-2);
+    background: rgba(236,72,153,.12); color: #BE185D;
+    font-size: var(--aj-fs-caps); font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase;
+    padding: 5px var(--aj-3); border-radius: var(--aj-r-pill);
+  }
+  .selo p { color: #475569; line-height: 1.65; max-width: 62ch; }
+  .selo blockquote {
+    margin: var(--aj-5) 0 0; padding-left: var(--aj-5);
+    border-left: 3px solid var(--aj-border);
+    color: var(--aj-navy); font-size: var(--aj-fs-lg); line-height: 1.5;
+  }
+
+  /* --- Fecho --- */
+  .cta {
+    text-align: center; padding: var(--aj-10) var(--aj-6);
+    background: var(--aj-navy); border-radius: 24px;
+    margin-bottom: var(--aj-10);
+  }
+  .cta h2 { color: #fff; margin: 0 auto var(--aj-3); max-width: 20ch; }
+  .cta p { color: #B9CBDF; margin: 0 auto var(--aj-6); max-width: 48ch; line-height: 1.6; }
+  .cta .btn { background: var(--aj-yellow); color: #3D2C00; }
+  .cta .btn:hover { background: #FFD733; }
+
+  footer {
+    border-top: 1px solid var(--aj-border);
+    padding: var(--aj-6) 0 var(--aj-10);
+    font-size: var(--aj-fs-sm); color: var(--aj-text-2);
+    display: flex; flex-wrap: wrap; gap: var(--aj-4); align-items: center;
+  }
+  footer a { color: var(--aj-accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .footer__word { width: 92px; opacity: .55; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav__in">
+    <span class="nav__mark" role="img" aria-label="Logo Auto Justo"></span>
+    <span class="aj-wordmark nav__word">Auto Justo</span>
+    <a class="btn nav__cta" href="/app">Entrar</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="chip"><span class="chip__dot"></span> Protótipo navegável · 9 telas</span>
+    <h1>Você não precisa entender de carro pra não <span class="accent">levar prejuízo</span>.</h1>
+    <p class="lede">
+      Descreva o problema em português comum. A IA levanta a hipótese, estima o custo com peça
+      e mão de obra separadas e te leva a uma oficina verificada. Depois, acompanha o pós-serviço.
+    </p>
+    <div class="hero__actions">
+      <a class="btn btn--lg" href="/app">Entrar no app</a>
+      <a class="btn btn--lg btn--ghost" href="/telas">Ver as 9 telas</a>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat__n">11 anos</div>
+      <div class="stat__t">Idade média da frota brasileira. Carro mais velho quebra mais, e cada reparo vira decisão de risco.</div>
+    </div>
+    <div class="stat">
+      <div class="stat__n">70%</div>
+      <div class="stat__t">Dos veículos não têm seguro. Todo custo sai do bolso, então todo erro de diagnóstico é prejuízo direto.</div>
+    </div>
+    <div class="stat">
+      <div class="stat__n">7 de 8</div>
+      <div class="stat__t">Entrevistados dependem de indicação pessoal. Quando essa rede falha, ficam sem alternativa confiável.</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="caps">O problema</div>
+    <h2>A confiança hoje depende de sorte social.</h2>
+    <p class="lede">
+      Quem tem mecânico de confiança encontrou por acaso e se agarra a ele por décadas. Quem não tem
+      vive uma saga de oficinas. Um entrevistado passou por cinco oficinas em dois meses sem
+      diagnóstico correto. Outro quase pagou R$ 15 mil por um reparo de R$ 180.
+    </p>
+  </section>
+
+  <section>
+    <div class="caps">Como funciona</div>
+    <h2>Da queixa em linguagem leiga até o serviço entregue.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step__n">1</div>
+        <div class="step__t">Você conta o que houve</div>
+        <div class="step__d">Texto, áudio ou foto do painel. Sem formulário, sem jargão técnico: é uma conversa.</div>
+      </div>
+      <div class="step">
+        <div class="step__n">2</div>
+        <div class="step__t">A IA levanta a hipótese</div>
+        <div class="step__d">Com estimativa de peça e mão de obra separadas, e o que dá pra você mesmo verificar antes de sair de casa.</div>
+      </div>
+      <div class="step">
+        <div class="step__n">3</div>
+        <div class="step__t">Oficinas verificadas respondem</div>
+        <div class="step__d">CNPJ conferido e avaliação por critério. Os orçamentos chegam lado a lado, com alerta no que foge da média.</div>
+      </div>
+      <div class="step">
+        <div class="step__n">4</div>
+        <div class="step__t">Fica registrado</div>
+        <div class="step__d">Agendamento, histórico do carro preenchido sozinho e lembrete de manutenção preventiva.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="selo">
+      <span class="selo__badge">♥ Selo Respeitoso</span>
+      <h2 style="margin-top:var(--aj-4)">Oficina que atende mulher com respeito recebe selo.</h2>
+      <p>
+        Três em cada quatro mulheres entrevistadas relatam ser cobradas a mais ou tratadas com descaso.
+        Todas as quatro delegam a conversa com o mecânico a alguma figura masculina. Duas abandonaram a
+        posse do carro por causa disso: uma vendeu, outra migrou pra aluguel.
+      </p>
+      <blockquote>
+        Isso não é mais uma dor da lista. É o posicionamento: nada no mercado brasileiro trata a
+        vulnerabilidade de gênero em oficina de forma explícita.
+      </blockquote>
+    </div>
+  </section>
+
+  <section>
+    <div class="cta">
+      <h2>Veja a jornada inteira funcionando.</h2>
+      <p>
+        Nove telas navegáveis, do cadastro por foto do CRLV até o pós-serviço. Roda no navegador,
+        sem instalar nada.
+      </p>
+      <a class="btn btn--lg" href="/app">Entrar no app</a>
+    </div>
+  </section>
+
+  <footer>
+    <span class="aj-wordmark footer__word">Auto Justo</span>
+    <span>Protótipo de produto · dados de pesquisa em <code>docs/</code></span>
+    <span style="margin-left:auto"><a href="/telas">Índice das telas</a> · <a href="/api/healthz">API</a></span>
+  </footer>
+
+</div>
+
+</body>
+</html>

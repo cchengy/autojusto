@@ -20,8 +20,23 @@ App mobile AI native que resolve a desconfiança entre motoristas e oficinas mec
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
 
+## Rotas
+
+O artifact `api-server` serve o domínio inteiro. A API fica sob `/api`; o resto é estático.
+
+| Rota | Serve |
+|---|---|
+| `/` | Landing (`site/index.html`) |
+| `/app` | A jornada do cliente, redireciona para `T00-onboarding.html` |
+| `/telas` | Índice das 9 telas, visualizador de desenvolvimento |
+| `/api/*` | API Express, com health check em `/api/healthz` |
+
+As pastas `site/` e `prototipo/` são localizadas em tempo de execução subindo a árvore a partir do cwd, porque o cwd difere entre dev (pasta do pacote) e produção (raiz do repo). Ver `artifacts/api-server/src/lib/prototipo.ts`.
+
 ## Where things live
 
+- `lib/brand/` — **fonte da verdade da marca**. Paleta em CSS (`tokens.css`), em TS (`index.ts`) e os assets do logo. Qualquer artifact novo deve importar daqui em vez de escolher cor própria: `import "@workspace/brand/tokens.css"`.
+- `site/index.html` — landing servida em `/`. Usa o mesmo `tokens.css` do app, sem cópia de paleta.
 - `docs/` — fonte da verdade do produto. `autojusto_solucao_ai_native.md` (funcionalidades e jornada), `compilacao_pitch.md` (problema, público, mercado), `autojusto_prompt0_atualizado.md` (direção visual).
 - `prototipo/` — as 9 telas do app (T-00 a T-08) em HTML/CSS/JS puro, sem dependência externa. `tokens.css` tem a paleta e os componentes; `aj.js` tem as microinterações e a navegação entre telas. Abra qualquer `T0*.html` direto no navegador.
 - Visualizadores de desktop — `index.html` (índice das telas), `autojusto-all-in-one.html` (as 9 telas num arquivo só) e `build-all-in-one.py` (gerador) — existem na sua cópia local mas estão no `.gitignore`. O repositório guarda só o app.

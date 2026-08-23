@@ -196,9 +196,18 @@
       var file = fileForId(m[1]);
       if (!file) return;
       el.dataset.ajLinked = '1';
-      el.style.cursor = 'pointer';
       el.setAttribute('role', 'link');
       el.setAttribute('tabindex', '0');
+      /* Uma aparência só para todas as telas, no lugar dos seis estilos
+         próprios que cada uma tinha. A seta some do texto: agora ela é
+         desenhada pelo CSS. */
+      /* Descarta o estilo próprio da tela: ele vive no <style> dela, que carrega
+         depois do tokens.css e venceria o desempate de especificidade. */
+      Array.prototype.slice.call(el.classList).forEach(function (c) {
+        if (/^t\d+-next$/.test(c)) el.classList.remove(c);
+      });
+      el.classList.add('aj-next');
+      el.textContent = (el.textContent || '').replace(/\s*[→>]\s*$/, '');
       el.addEventListener('click', function () { global.location.href = file; });
       el.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); global.location.href = file; }
@@ -215,12 +224,28 @@
     });
   }
 
+  /* O passo seguinte fica sempre por último na rolagem. Antes ele aparecia em
+     posição variável conforme a tela, e era fácil não achar. Só move quando
+     ainda não está no fim, senão a própria movimentação realimentaria o
+     observador de mutações. */
+  function fixarNoFim() {
+    var todos = document.querySelectorAll('.aj-next');
+    Array.prototype.forEach.call(todos, function (el) {
+      var pai = el.parentNode;
+      if (pai && pai.lastElementChild !== el) pai.appendChild(el);
+    });
+  }
+
   function init() {
     build();
     wireGo();
     linkFooters();
+    fixarNoFim();
     /* telas revelam rodapé depois da animação — reobserva. */
-    var mo = new MutationObserver(linkFooters);
+    var mo = new MutationObserver(function () {
+      linkFooters();
+      fixarNoFim();
+    });
     mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class'] });
   }
 

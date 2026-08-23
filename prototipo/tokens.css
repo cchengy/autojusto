@@ -333,6 +333,40 @@ html, body {
   * { animation-duration: 1ms !important; transition-duration: 1ms !important; }
 }
 
+/* Passo do protótipo: leva à próxima tela da jornada.
+   Deliberadamente de outra família visual que os botões do produto — é cromo
+   de protótipo, e um print desta tela não pode sugerir um botão que o app não
+   tem. Por isso pílula contornada, e não o pill azul sólido dos CTAs. */
+.aj-next {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--aj-2);
+  margin: var(--aj-5) 0 var(--aj-2);
+  padding: var(--aj-3) var(--aj-5);
+  border-radius: var(--aj-r-pill);
+  background: var(--aj-surface);
+  border: 1px solid var(--aj-border);
+  box-shadow: 0 2px 10px rgba(5,37,119,.08);
+  color: var(--aj-navy);
+  font-size: var(--aj-fs-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: transform 180ms var(--aj-ease), box-shadow 180ms var(--aj-ease);
+}
+.aj-next:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(5,37,119,.14); }
+.aj-next::after {
+  content: "\2192";
+  color: var(--aj-yellow-ink);
+  background: var(--aj-yellow);
+  width: 20px; height: 20px;
+  border-radius: var(--aj-r-pill);
+  display: grid; place-items: center;
+  font-size: 12px; line-height: 1;
+}
+
 /* Marca — badge e faixa de acento em amarelo */
 .aj-badge--brand { background: rgba(248,198,19,.22); color: var(--aj-yellow-ink); }
 .aj-card--brand  { border-left: 3px solid var(--aj-yellow); }

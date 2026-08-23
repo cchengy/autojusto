@@ -191,15 +191,7 @@
     var nodes = document.querySelectorAll('body *');
     Array.prototype.forEach.call(nodes, function (el) {
       if (el.children.length > 1 || el.dataset.ajLinked) return;
-      /* Elementos que não são conteúdo visível ficam de fora. Sem isto, um
-         <script> cujo código menciona "Continua em" é tratado como rodapé: a
-         função reescreve o textContent dele e aplica o estilo da pílula, que
-         tem display, e o código-fonte da tela aparece na página. */
-      if (/^(SCRIPT|STYLE|TEMPLATE|NOSCRIPT|TITLE)$/.test(el.tagName)) return;
-      /* O rodapé é uma linha curta; blocos longos são outra coisa. */
-      var txt = el.textContent || '';
-      if (txt.length > 120) return;
-      var m = /Continua em\s+(T-?\d\d)/i.exec(txt);
+      var m = /Continua em\s+(T-?\d\d)/i.exec(el.textContent || '');
       if (!m) return;
       var file = fileForId(m[1]);
       if (!file) return;

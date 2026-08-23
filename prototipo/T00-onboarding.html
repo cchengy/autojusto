@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auto Justo — T-00 Onboarding</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* --- Locais da T-00 (não existem em tokens.css) --- */
+
+  /* Botão discreto de replay, no canto do header */
+  .t0-replay {
+    margin-left: auto;
+    border: 1px solid var(--aj-border);
+    background: transparent;
+    color: var(--aj-text-2);
+    font-family: inherit;
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: var(--aj-1) var(--aj-3);
+    border-radius: var(--aj-r-pill);
+    cursor: pointer;
+  }
+  .t0-replay:hover { color: var(--aj-accent); border-color: #cbd5e1; }
+
+  /* Indicador de digitação da IA */
+  .t0-typing { align-self: flex-start; display: flex; gap: 5px; padding: var(--aj-2) 0; }
+  .t0-typing i {
+    width: 6px; height: 6px; border-radius: var(--aj-r-pill);
+    background: var(--aj-text-2); display: block;
+    animation: t0-blink 1.1s infinite var(--aj-ease);
+  }
+  .t0-typing i:nth-child(2) { animation-delay: .16s; }
+  .t0-typing i:nth-child(3) { animation-delay: .32s; }
+  @keyframes t0-blink { 0%,100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+
+  /* Área de captura do documento */
+  .t0-capture {
+    border: 1.5px dashed #C7D5E4;
+    border-radius: var(--aj-3);
+    background: var(--aj-tint);
+    padding: var(--aj-8) var(--aj-4);
+    text-align: center;
+    margin-bottom: var(--aj-4);
+  }
+  .t0-capture__icon {
+    width: 56px; height: 56px; margin: 0 auto var(--aj-3);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: var(--aj-shadow-card);
+    display: grid; place-items: center;
+    font-size: 26px;
+  }
+  .t0-capture__hint { font-size: var(--aj-fs-sm); color: var(--aj-text-2); line-height: 1.4; }
+
+  /* Link secundário centralizado (ghost sem caixa) */
+  .t0-link {
+    display: block; width: 100%;
+    margin-top: var(--aj-3);
+    background: none; border: 0;
+    font-family: inherit;
+    font-size: var(--aj-fs-sm);
+    font-weight: 600;
+    color: var(--aj-text-2);
+    text-align: center;
+    padding: var(--aj-2);
+    cursor: pointer;
+  }
+  .t0-link:hover { color: var(--aj-accent); }
+
+  /* Card já usado sai do foco */
+  .t0-spent { opacity: .5; pointer-events: none; filter: saturate(.5); transition: opacity var(--aj-dur) var(--aj-ease); }
+
+  /* Chip de documento dentro da bolha do usuário */
+  .t0-doc { display: flex; align-items: center; gap: var(--aj-3); }
+  .t0-doc__thumb {
+    width: 38px; height: 38px; flex: 0 0 38px;
+    border-radius: var(--aj-2);
+    background: rgba(255,255,255,.14);
+    display: grid; place-items: center;
+    font-size: var(--aj-fs-lg);
+  }
+  .t0-doc__sub { font-size: var(--aj-fs-sm); opacity: .7; margin-top: 1px; }
+
+  /* Checklist: espaçamento entre linhas */
+  .t0-checks .aj-check + .aj-check { margin-top: var(--aj-4); }
+
+  /* Card de dados extraídos */
+  .t0-data { display: flex; align-items: baseline; justify-content: space-between; gap: var(--aj-4); padding: var(--aj-3) 0; }
+  .t0-data + .t0-data { border-top: 1px solid var(--aj-border); }
+  .t0-data__k {
+    font-size: var(--aj-fs-caps); letter-spacing: .1em; text-transform: uppercase;
+    color: var(--aj-text-2); font-weight: 600;
+  }
+  .t0-data__v { font-size: var(--aj-fs-body); font-weight: 600; text-align: right; }
+  .t0-data__v small { display: block; font-size: var(--aj-fs-sm); font-weight: 500; color: var(--aj-text-2); margin-top: 2px; }
+
+  /* Input de placa */
+  .t0-plate {
+    width: 100%;
+    border: 1.5px solid var(--aj-border);
+    border-radius: var(--aj-3);
+    background: var(--aj-bg);
+    padding: var(--aj-4);
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: var(--aj-fs-xl);
+    font-weight: 700;
+    letter-spacing: .22em;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--aj-ai-text);
+    outline: none;
+    transition: border-color 180ms var(--aj-ease);
+  }
+  .t0-plate::placeholder { color: #CBD5E1; font-weight: 600; }
+  .t0-plate:focus { border-color: var(--aj-accent); }
+  .t0-plate.is-valid { border-color: var(--aj-success); }
+  .t0-plate-hint { font-size: var(--aj-fs-sm); color: var(--aj-text-2); text-align: center; margin: var(--aj-3) 0 var(--aj-4); }
+
+  /* Par de botões empilhados */
+  .t0-actions { display: flex; flex-direction: column; gap: var(--aj-2); }
+  .aj-btn[disabled] { opacity: .35; cursor: default; }
+
+  /* Sheet final */
+  .t0-sheet-name { font-size: var(--aj-fs-hero); font-weight: 700; text-align: center; line-height: 1.15; margin: var(--aj-2) 0 var(--aj-1); }
+  .t0-sheet-plate {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: var(--aj-fs-sm); letter-spacing: .18em;
+    color: var(--aj-text-2); text-align: center; margin-bottom: var(--aj-5);
+  }
+  .t0-sheet-line { font-size: var(--aj-fs-body); line-height: var(--aj-lh-body); text-align: center; color: var(--aj-ai-text); margin: 0 auto var(--aj-6); max-width: 260px; }
+
+  /* Input inferior desligado até o fim do cadastro */
+  .aj-input.is-off { opacity: .45; pointer-events: none; transition: opacity var(--aj-dur) var(--aj-ease); }
+</style>
+</head>
+<body>
+
+<div class="aj-device">
+  <div class="aj-statusbar"><span>9:41</span><span>▮▮▮ ▾</span></div>
+
+  <header class="aj-header">
+    <div class="aj-header__avatar">AJ</div>
+    <div class="aj-header__name">Auto Justo</div>
+    <button class="t0-replay" id="replay" title="Reiniciar demo">↻ replay</button>
+  </header>
+
+  <main class="aj-scroll" id="scroll"></main>
+
+  <div class="aj-input is-off" id="inputbar">
+    <input class="aj-input__field" placeholder="Mensagem" disabled>
+    <button class="aj-input__send" disabled>↑</button>
+  </div>
+
+  <div class="aj-sheet-scrim" id="scrim"></div>
+  <div class="aj-sheet" id="sheet">
+    <div class="aj-sheet__handle"></div>
+    <div class="aj-sheet__caps">Carro cadastrado</div>
+    <div class="t0-sheet-name">Hyundai HB20<br>2018</div>
+    <div class="t0-sheet-plate">GDA5H72</div>
+    <div class="aj-seal" id="seal">
+      <svg viewBox="0 0 48 48"><path d="M13 25 L21 33 L35 16"/></svg>
+    </div>
+    <p class="t0-sheet-line">Pronto. Agora é só me contar o que está acontecendo.</p>
+    <button class="aj-btn aj-btn--success" id="start">Começar</button>
+  </div>
+</div>
+
+<script src="aj.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var scroll  = document.getElementById('scroll');
+  var sheet   = document.getElementById('sheet');
+  var scrim   = document.getElementById('scrim');
+  var seal    = document.getElementById('seal');
+  var bar     = document.getElementById('inputbar');
+  var PLATE   = 'GDA5H72';
+  var run     = 0;                       /* invalida roteiros antigos no replay */
+
+  /* ---------- utilitários ---------- */
+  function node(html) {
+    var t = document.createElement('template');
+    t.innerHTML = html.trim();
+    return t.content.firstElementChild;
+  }
+  function push(html) {                  /* entra deslizando de baixo */
+    var n = node(html);
+    n.classList.add('aj-enter');
+    scroll.appendChild(n);
+    n.getBoundingClientRect();
+    n.classList.add('is-in');
+    AJ.scrollDown(scroll);
+    return n;
+  }
+  function spend(el) { if (el) el.classList.add('t0-spent'); }
+
+  /* Mensagem da IA: pontinhos, depois texto palavra por palavra (sem bolha) */
+  function ai(text, pause) {
+    var my = run;
+    var dots = node('<div class="t0-typing"><i></i><i></i><i></i></div>');
+    scroll.appendChild(dots);
+    AJ.scrollDown(scroll);
+    return AJ.wait(pause == null ? 620 : pause).then(function () {
+      if (my !== run) { return Promise.reject('stale'); }
+      dots.remove();
+      var p = node('<p class="aj-msg-ai"></p>');
+      scroll.appendChild(p);
+      var tick = setInterval(function () { AJ.scrollDown(scroll); }, 60);
+      return AJ.typeText(p, text).then(function () {
+        clearInterval(tick);
+        AJ.scrollDown(scroll);
+      });
+    });
+  }
+  /* Mensagem do usuário: bolha azul-marinho à direita */
+  function user(html) { return push('<div class="aj-msg-user">' + html + '</div>'); }
+
+  var swallow = function (e) { if (e !== 'stale') throw e; };
+
+  /* ---------- passo 1 + 2: boas-vindas e captura ---------- */
+  function boot() {
+    var my = run;
+    ai('Oi! Eu sou a Auto Justo. Vou te ajudar a resolver o que der problema no seu carro sem você levar prejuízo.', 380)
+      .then(function () { if (my !== run) return Promise.reject('stale'); return AJ.wait(280); })
+      .then(function () {
+        return ai('Pra começar, preciso conhecer o carro. Tira uma foto do documento — aquele papel do CRLV — que eu leio tudo sozinha. Se ele não estiver por perto, você pode só digitar a placa.');
+      })
+      .then(function () { if (my !== run) return Promise.reject('stale'); return AJ.wait(220); })
+      .then(function () { if (my === run) captureCard(); })
+      .catch(swallow);
+  }
+
+  function captureCard() {
+    var card = push(
+      '<div class="aj-card">' +
+        '<div class="aj-card__caps">Documento do carro</div>' +
+        '<div class="t0-capture">' +
+          '<div class="t0-capture__icon">📄</div>' +
+          '<div class="t0-capture__hint">Aponte a câmera para o CRLV.<br>Pode estar amassado — eu dou conta.</div>' +
+        '</div>' +
+        '<button class="aj-btn" data-act="foto">Tirar foto do documento</button>' +
+        '<button class="t0-link" data-act="placa">Prefiro digitar a placa</button>' +
+      '</div>'
+    );
+    card.querySelector('[data-act="foto"]').onclick = function () {
+      spend(card);
+      user('<div class="t0-doc"><div class="t0-doc__thumb">🪪</div><div><div>CRLV</div><div class="t0-doc__sub">foto enviada</div></div></div>');
+      lerDocumento('foto');
+    };
+    card.querySelector('[data-act="placa"]').onclick = function () {
+      spend(card);
+      user('Prefiro digitar a placa');
+      caminhoPlaca('Beleza. Digita a placa do jeito que ela aparece no carro.');
+    };
+  }
+
+  /* ---------- caminho alternativo: digitar a placa ---------- */
+  function caminhoPlaca(fala) {
+    var my = run;
+    ai(fala).then(function () {
+      if (my !== run) return;
+      var card = push(
+        '<div class="aj-card">' +
+          '<div class="aj-card__caps">Placa do veículo</div>' +
+          '<input class="t0-plate" maxlength="7" placeholder="ABC1D23" inputmode="text" spellcheck="false">' +
+          '<div class="t0-plate-hint">7 caracteres, sem traço</div>' +
+          '<button class="aj-btn" data-act="buscar" disabled>Buscar meu carro</button>' +
+          '<button class="t0-link" data-act="exemplo">usar a placa de exemplo ' + PLATE + '</button>' +
+        '</div>'
+      );
+      var input   = card.querySelector('.t0-plate');
+      var buscar  = card.querySelector('[data-act="buscar"]');
+      var re      = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/;
+
+      function check() {
+        var ok = re.test(input.value);
+        buscar.disabled = !ok;
+        input.classList.toggle('is-valid', ok);
+        return ok;
+      }
+      input.oninput = function () {
+        input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+        check();
+      };
+      input.onkeydown = function (e) { if (e.key === 'Enter' && check()) buscar.click(); };
+      card.querySelector('[data-act="exemplo"]').onclick = function () {
+        input.value = PLATE; check(); input.focus();
+      };
+      buscar.onclick = function () {
+        if (!check()) return;
+        spend(card);
+        user(input.value);
+        lerDocumento('placa');
+      };
+      setTimeout(function () { input.focus(); }, 120);
+    }).catch(swallow);
+  }
+
+  /* ---------- passo 3: checklist de leitura ---------- */
+  function lerDocumento(origem) {
+    var my = run;
+    var fala = origem === 'foto'
+      ? 'Deixa comigo, tô lendo o documento.'
+      : 'Achei. Tô confirmando os dados dessa placa na base.';
+    var itens = origem === 'foto'
+      ? ['Documento lido', 'Placa identificada', 'Modelo e ano confirmados na base', 'Perfil do carro criado']
+      : ['Placa recebida', 'Veículo localizado na base', 'Modelo e ano confirmados', 'Perfil do carro criado'];
+
+    ai(fala, 420).then(function () {
+      if (my !== run) return Promise.reject('stale');
+      var card = push(
+        '<div class="aj-card t0-checks">' +
+          '<div class="aj-card__caps">Lendo</div>' +
+          itens.map(function (t) {
+            return '<div class="aj-check aj-enter"><span class="aj-check__mark">✓</span><span>' + t + '</span></div>';
+          }).join('') +
+        '</div>'
+      );
+      var tick = setInterval(function () { AJ.scrollDown(scroll); }, 80);
+      return AJ.runChecklist(card).then(function () {
+        clearInterval(tick);
+        return AJ.wait(420);
+      });
+    })
+    .then(function () { if (my === run) mostrarDados(); })
+    .catch(swallow);
+  }
+
+  /* ---------- passos 4 e 5: dados extraídos + validação ---------- */
+  function mostrarDados() {
+    var my = run;
+    ai('Prontinho, tirei tudo do documento:', 380).then(function () {
+      if (my !== run) return Promise.reject('stale');
+      push(
+        '<div class="aj-card">' +
+          '<div class="aj-card__caps">Perfil do carro</div>' +
+          '<div class="t0-data"><span class="t0-data__k">Placa</span><span class="t0-data__v">' + PLATE + '</span></div>' +
+          '<div class="t0-data"><span class="t0-data__k">Modelo</span><span class="t0-data__v">Hyundai HB20<small>1.0 Comfort Plus</small></span></div>' +
+          '<div class="t0-data"><span class="t0-data__k">Ano</span><span class="t0-data__v">2018</span></div>' +
+          '<div class="t0-data"><span class="t0-data__k">Renavam</span><span class="t0-data__v">•••••••472</span></div>' +
+        '</div>'
+      );
+      return AJ.wait(320);
+    })
+    .then(function () {
+      if (my !== run) return Promise.reject('stale');
+      return ai('Seu carro é um Hyundai HB20 2018, correto?');
+    })
+    .then(function () {
+      if (my !== run) return;
+      var card = push(
+        '<div class="aj-card"><div class="t0-actions">' +
+          '<button class="aj-btn" data-act="sim">Sim, é esse</button>' +
+          '<button class="aj-btn aj-btn--ghost" data-act="corrigir">Corrigir</button>' +
+        '</div></div>'
+      );
+      card.querySelector('[data-act="sim"]').onclick = function () {
+        spend(card);
+        user('Sim, é esse');
+        confirmar();
+      };
+      card.querySelector('[data-act="corrigir"]').onclick = function () {
+        spend(card);
+        user('Corrigir');
+        caminhoPlaca('Sem problema, acontece. Me passa a placa certa que eu busco de novo.');
+      };
+    })
+    .catch(swallow);
+  }
+
+  /* ---------- passo 6: bottom sheet de confirmação ---------- */
+  function confirmar() {
+    var my = run;
+    AJ.wait(560).then(function () {
+      if (my !== run) return;
+      AJ.openSheet(sheet);
+    });
+  }
+
+  document.getElementById('start').onclick = function () {
+    AJ.closeSheet(sheet);
+    bar.classList.remove('is-off');
+    var my = run;
+    AJ.wait(420)
+      .then(function () { if (my !== run) return Promise.reject('stale'); return ai('Pode falar comigo do jeito que você falaria com um amigo. O que o HB20 está fazendo?'); })
+      .catch(swallow);
+  };
+
+  /* ---------- replay ---------- */
+  function replay() {
+    run++;
+    AJ.closeSheet(sheet);
+    seal.classList.remove('is-on');
+    scrim.classList.remove('is-open');
+    bar.classList.add('is-off');
+    scroll.innerHTML = '';
+    scroll.scrollTop = 0;
+    setTimeout(boot, 260);
+  }
+  document.getElementById('replay').onclick = replay;
+
+  /* roda sozinho até o card de captura */
+  boot();
+})();
+</script>
+</body>
+</html>

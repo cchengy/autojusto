@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auto Justo — T-03 Oficinas</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* ---- Locais da T-03 ---- */
+
+  .t3-thinking {
+    display: flex; align-items: center; gap: var(--aj-2);
+    font-size: var(--aj-fs-sm);
+    color: var(--aj-text-2);
+    font-weight: 600;
+    letter-spacing: .04em;
+    transition: opacity var(--aj-dur) var(--aj-ease);
+  }
+  .t3-thinking.is-done { opacity: 0; }
+  .t3-thinking__dot {
+    width: 6px; height: 6px; border-radius: var(--aj-r-pill);
+    background: var(--aj-accent);
+    animation: t3-pulse 1.1s var(--aj-ease) infinite;
+  }
+  .t3-thinking__dot:nth-child(2) { animation-delay: .18s; }
+  .t3-thinking__dot:nth-child(3) { animation-delay: .36s; margin-right: var(--aj-1); }
+  @keyframes t3-pulse { 0%,100% { opacity:.25; transform: scale(.8);} 50% { opacity:1; transform: scale(1);} }
+
+  .t3-ai-note {
+    align-self: flex-start;
+    max-width: 92%;
+    font-size: var(--aj-fs-sm);
+    line-height: 1.5;
+    color: var(--aj-text-2);
+  }
+
+  /* Lista de oficinas — vertical, nunca carrossel */
+  .t3-list { display: flex; flex-direction: column; gap: var(--aj-3); align-self: stretch; }
+
+  .t3-shop {
+    background: var(--aj-surface);
+    border-radius: var(--aj-r-card);
+    box-shadow: var(--aj-shadow-card);
+    padding: var(--aj-4);
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    display: block;
+    transition: border-color var(--aj-dur) var(--aj-ease),
+                opacity var(--aj-dur) var(--aj-ease),
+                transform var(--aj-dur) var(--aj-ease),
+                box-shadow var(--aj-dur) var(--aj-ease);
+  }
+  .t3-shop:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(5,37,119,.12); }
+  .t3-shop.is-match { border-color: rgba(16,185,129,.55); }
+  .t3-shop.is-dim { opacity: .34; }
+
+  .t3-shop__top { display: flex; align-items: flex-start; gap: var(--aj-3); }
+  .t3-shop__name { font-size: var(--aj-fs-body); font-weight: 600; line-height: 1.3; }
+  .t3-shop__meta {
+    margin-top: 3px;
+    font-size: var(--aj-fs-sm);
+    color: var(--aj-text-2);
+    display: flex; align-items: center; gap: var(--aj-1);
+    flex-wrap: wrap;
+  }
+  .t3-shop__score {
+    margin-left: auto; text-align: right; flex: 0 0 auto;
+  }
+  .t3-shop__score b { font-size: var(--aj-fs-lg); font-weight: 700; display: block; line-height: 1.1; }
+  .t3-shop__score small { font-size: var(--aj-fs-caps); color: var(--aj-text-2); }
+
+  .t3-shop__why {
+    margin-top: var(--aj-3);
+    font-size: var(--aj-fs-sm);
+    line-height: 1.5;
+    color: var(--aj-ai-text);
+  }
+
+  .t3-tags { display: flex; flex-wrap: wrap; gap: var(--aj-1); margin-top: var(--aj-3); }
+
+  .t3-shop__foot {
+    margin-top: var(--aj-3);
+    padding-top: var(--aj-3);
+    border-top: 1px solid var(--aj-border);
+    display: flex; align-items: baseline; gap: var(--aj-2);
+    font-size: var(--aj-fs-sm);
+  }
+  .t3-shop__price { font-weight: 600; }
+  .t3-shop__resp { margin-left: auto; color: var(--aj-text-2); font-size: var(--aj-fs-caps); }
+
+  /* Transparência de ranking — o ponto do quadro: rank x patrocínio */
+  .t3-sponsor {
+    display: inline-flex; align-items: center; gap: var(--aj-1);
+    font-size: var(--aj-fs-caps);
+    font-weight: 600;
+    color: var(--aj-text-2);
+    background: #F1F5F9;
+    padding: 3px var(--aj-2);
+    border-radius: var(--aj-r-pill);
+  }
+
+  /* Chips de refino conversacional */
+  .t3-chips { display: flex; flex-wrap: wrap; gap: var(--aj-2); align-self: stretch; }
+  .t3-chip {
+    padding: var(--aj-2) var(--aj-4);
+    border-radius: var(--aj-r-pill);
+    border: 1px solid var(--aj-border);
+    background: var(--aj-surface);
+    font-family: inherit;
+    font-size: var(--aj-fs-sm);
+    font-weight: 600;
+    color: var(--aj-accent);
+    cursor: pointer;
+    transition: background var(--aj-dur) var(--aj-ease),
+                color var(--aj-dur) var(--aj-ease),
+                border-color var(--aj-dur) var(--aj-ease),
+                opacity var(--aj-dur) var(--aj-ease);
+  }
+  .t3-chip:hover { background: var(--aj-tint); }
+  .t3-chip.is-used { opacity: .38; pointer-events: none; }
+
+  .t3-next {
+    align-self: center;
+    margin-top: var(--aj-2);
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .06em;
+    color: var(--aj-text-2);
+  }
+  .t3-next[role="link"]:hover { color: var(--aj-accent); }
+
+  .t3-replay {
+    position: absolute;
+    right: var(--aj-4);
+    bottom: 96px;
+    z-index: 5;
+    border: 1px solid var(--aj-border);
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(6px);
+    border-radius: var(--aj-r-pill);
+    padding: var(--aj-2) var(--aj-3);
+    font-family: inherit;
+    font-size: var(--aj-fs-caps);
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--aj-text-2);
+    cursor: pointer;
+    box-shadow: var(--aj-shadow-card);
+  }
+  .t3-replay:hover { color: var(--aj-accent); }
+
+  .t3-secondary {
+    background: none; border: 0; padding: var(--aj-2);
+    width: 100%;
+    font-family: inherit;
+    font-size: var(--aj-fs-sm);
+    font-weight: 600;
+    color: var(--aj-text-2);
+    cursor: pointer;
+    text-align: center;
+    margin-top: var(--aj-2);
+  }
+  .t3-secondary:hover { color: var(--aj-accent); }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="aj-device">
+
+  <div class="aj-statusbar">
+    <span>9:41</span>
+    <span>▮▮▮ ⌁ 87%</span>
+  </div>
+
+  <header class="aj-header">
+    <div class="aj-header__avatar">AJ</div>
+    <div class="aj-header__name">Auto Justo</div>
+    <div class="aj-header__ctx">HB20 2018</div>
+  </header>
+
+  <main class="aj-scroll" id="scroll">
+
+    <!-- eco da T-02 -->
+    <div class="aj-msg-user">Ver oficinas perto de mim</div>
+
+    <div class="t3-thinking" id="thinking">
+      <span class="t3-thinking__dot"></span>
+      <span class="t3-thinking__dot"></span>
+      <span class="t3-thinking__dot"></span>
+      Procurando oficinas…
+    </div>
+
+    <!-- A IA recomenda; o cliente não filtra -->
+    <p class="aj-msg-ai" id="fala1" hidden
+       data-aj-type="Achei 3 oficinas perto de você que fazem junta homocinética em HB20. Já mandei pra elas a descrição do seu problema — não precisa explicar tudo de novo."></p>
+
+    <p class="t3-ai-note" id="fala2" hidden>Ordenei por quem entende do seu caso e por como outros clientes avaliaram. Oficina patrocinada aparece marcada e nunca sobe de posição por causa disso.</p>
+
+    <section class="t3-list" id="lista">
+
+      <button class="t3-shop aj-enter" type="button" data-shop="silva" data-aj-go="T04-perfil-oficina.html">
+        <div class="t3-shop__top">
+          <div>
+            <div class="t3-shop__name">Oficina Silva</div>
+            <div class="t3-shop__meta"><span>1,2 km</span> · <span>Vila Mariana</span></div>
+          </div>
+          <div class="t3-shop__score"><b>4,8</b><small>48 avaliações</small></div>
+        </div>
+        <p class="t3-shop__why">Especializada em suspensão e direção — é exatamente o grupo do seu problema. Foi a que mais recebeu elogio por explicar o orçamento antes de começar.</p>
+        <div class="t3-tags">
+          <span class="aj-badge aj-badge--respeito">♀ atendimento respeitoso</span>
+          <span class="aj-badge aj-badge--success">✓ CNPJ verificado</span>
+        </div>
+        <div class="t3-shop__foot">
+          <span class="t3-shop__price">R$ 340 – 420</span>
+          <span class="t3-shop__resp">responde em ~2h</span>
+        </div>
+      </button>
+
+      <button class="t3-shop aj-enter" type="button" data-shop="park" data-aj-go="T04-perfil-oficina.html">
+        <div class="t3-shop__top">
+          <div>
+            <div class="t3-shop__name">Oficina Park</div>
+            <div class="t3-shop__meta"><span>2,4 km</span> · <span>Saúde</span></div>
+          </div>
+          <div class="t3-shop__score"><b>4,6</b><small>112 avaliações</small></div>
+        </div>
+        <p class="t3-shop__why">Trabalha só com peça original, por isso cobra mais. Vale se você quiser peça de fábrica — no seu carro de 7 anos, peça paralela de boa marca também resolve.</p>
+        <div class="t3-tags">
+          <span class="aj-badge aj-badge--respeito">♀ atendimento respeitoso</span>
+          <span class="aj-badge aj-badge--success">✓ CNPJ verificado</span>
+        </div>
+        <div class="t3-shop__foot">
+          <span class="t3-shop__price">R$ 480 – 560</span>
+          <span class="t3-shop__resp">responde em ~5h</span>
+        </div>
+      </button>
+
+      <button class="t3-shop aj-enter" type="button" data-shop="vilanova" data-aj-go="T04-perfil-oficina.html">
+        <div class="t3-shop__top">
+          <div>
+            <div class="t3-shop__name">Auto Center Vila Nova</div>
+            <div class="t3-shop__meta"><span>3,1 km</span> · <span>Ipiranga</span> · <span class="t3-sponsor">patrocinado</span></div>
+          </div>
+          <div class="t3-shop__score"><b>4,5</b><small>37 avaliações</small></div>
+        </div>
+        <p class="t3-shop__why">Abre aos sábados de manhã, o que ajuda se você não consegue sair no meio da semana. Ainda tem pouca avaliação de mulheres na plataforma.</p>
+        <div class="t3-tags">
+          <span class="aj-badge aj-badge--success">✓ CNPJ verificado</span>
+          <span class="aj-badge aj-badge--warn">sábado 8h–13h</span>
+        </div>
+        <div class="t3-shop__foot">
+          <span class="t3-shop__price">R$ 360 – 450</span>
+          <span class="t3-shop__resp">responde em ~1 dia</span>
+        </div>
+      </button>
+
+    </section>
+
+    <p class="t3-ai-note" id="fala3" hidden>Toque em qualquer uma pra ver o perfil completo — nota por critério, comentários e fotos da oficina.</p>
+
+    <!-- refino conversacional: o cliente ajusta falando, não filtrando -->
+    <div class="t3-chips" id="chips" hidden>
+      <button class="t3-chip" type="button" data-refine="sabado">Tem alguma que atende sábado?</button>
+      <button class="t3-chip" type="button" data-refine="selo">Só as com selo respeitoso</button>
+      <button class="t3-chip" type="button" data-refine="barata">Qual sai mais barata?</button>
+    </div>
+
+    <!-- resposta do refino -->
+    <div class="aj-msg-user" id="userRefine" hidden></div>
+    <p class="aj-msg-ai" id="respRefine" hidden></p>
+
+    <section class="aj-card aj-enter" id="acao" hidden>
+      <button class="aj-btn" type="button" data-aj-go="T05-orcamentos.html">Pedir orçamento pras 3</button>
+      <button class="t3-secondary" type="button" data-aj-go="T04-perfil-oficina.html">Ver o perfil da Oficina Silva</button>
+    </section>
+
+    <div class="t3-next" id="next" hidden>Continua em T-04 Perfil da oficina →</div>
+
+  </main>
+
+  <button class="t3-replay" type="button" id="replay">↻ replay</button>
+
+  <div class="aj-input">
+    <input class="aj-input__field" type="text" placeholder="Mensagem" aria-label="Mensagem">
+    <button class="aj-input__send" type="button" aria-label="Enviar">↑</button>
+  </div>
+
+</div>
+
+<script src="aj.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var scroll   = document.getElementById('scroll');
+  var thinking = document.getElementById('thinking');
+  var fala1    = document.getElementById('fala1');
+  var fala2    = document.getElementById('fala2');
+  var fala3    = document.getElementById('fala3');
+  var lista    = document.getElementById('lista');
+  var chips    = document.getElementById('chips');
+  var userRef  = document.getElementById('userRefine');
+  var respRef  = document.getElementById('respRefine');
+  var acao     = document.getElementById('acao');
+  var next     = document.getElementById('next');
+  var replay   = document.getElementById('replay');
+
+  var shops = Array.prototype.slice.call(lista.querySelectorAll('.t3-shop'));
+
+  var REFINE = {
+    sabado: {
+      ask: 'Tem alguma que atende sábado?',
+      say: 'Só a Auto Center Vila Nova abre sábado, das 8h às 13h. A Silva e a Park atendem de segunda a sexta até 18h. Se sábado for a única opção, a Vila Nova resolve — o preço dela fica no meio das três.',
+      match: ['vilanova']
+    },
+    selo: {
+      ask: 'Só as com selo respeitoso',
+      say: 'Ficam a Silva e a Park. As duas têm avaliação positiva consistente de clientes mulheres. A Vila Nova ainda tem pouca avaliação de mulheres na plataforma — não quer dizer que atende mal, quer dizer que não dá pra afirmar nada ainda.',
+      match: ['silva', 'park']
+    },
+    barata: {
+      ask: 'Qual sai mais barata?',
+      say: 'A Silva, entre R$ 340 e R$ 420 — e é a mais barata sem ser a pior avaliada, o que nem sempre acontece. A Park cobra mais porque usa peça original. Lembrando que a minha estimativa pro serviço era R$ 270 a R$ 450, então as três estão dentro do razoável.',
+      match: ['silva']
+    }
+  };
+
+  function applyMatch(keys) {
+    shops.forEach(function (el) {
+      var on = keys.indexOf(el.dataset.shop) >= 0;
+      el.classList.toggle('is-match', on);
+      el.classList.toggle('is-dim', !on);
+    });
+  }
+
+  function clearMatch() {
+    shops.forEach(function (el) { el.classList.remove('is-match', 'is-dim'); });
+  }
+
+  chips.addEventListener('click', function (e) {
+    var btn = e.target.closest('.t3-chip');
+    if (!btn) return;
+    var r = REFINE[btn.dataset.refine];
+    if (!r) return;
+
+    btn.classList.add('is-used');
+
+    userRef.textContent = r.ask;
+    userRef.hidden = false;
+    AJ.scrollDown(scroll);
+
+    respRef.hidden = false;
+    respRef.textContent = '';
+
+    AJ.wait(420)
+      .then(function () { applyMatch(r.match); return AJ.typeText(respRef, r.say); })
+      .then(function () { AJ.scrollDown(scroll); });
+  });
+
+  function run() {
+    /* estado inicial */
+    clearMatch();
+    thinking.classList.remove('is-done');
+    [fala1, fala2, fala3, userRef, respRef, acao, next].forEach(function (el) { el.hidden = true; });
+    chips.hidden = true;
+    chips.querySelectorAll('.t3-chip').forEach(function (c) { c.classList.remove('is-used'); });
+    shops.forEach(function (el) { el.classList.remove('is-in'); });
+    scroll.scrollTop = 0;
+
+    AJ.wait(900)
+      .then(function () {
+        thinking.classList.add('is-done');
+        fala1.hidden = false;
+        return AJ.typeText(fala1);
+      })
+      .then(function () {
+        AJ.scrollDown(scroll);
+        fala2.hidden = false;
+        return AJ.wait(320);
+      })
+      .then(function () {
+        return AJ.reveal(shops, 220);
+      })
+      .then(function () {
+        AJ.scrollDown(scroll);
+        fala3.hidden = false;
+        return AJ.wait(400);
+      })
+      .then(function () {
+        chips.hidden = false;
+        AJ.scrollDown(scroll);
+        return AJ.wait(600);
+      })
+      .then(function () {
+        acao.hidden = false;
+        acao.classList.add('is-in');
+        next.hidden = false;
+        AJ.scrollDown(scroll);
+      });
+  }
+
+  replay.addEventListener('click', run);
+  run();
+})();
+</script>
+</body>
+</html>

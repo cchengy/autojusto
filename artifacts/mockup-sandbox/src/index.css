@@ -78,40 +78,54 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
+  /* Auto Justo — paleta lida do logo (docs/).
+     #052577 navy · #0136AB azul · #084DB1 azul vivo · #F8C613 amarelo.
+     Amarelo = acento pontual; verde fica reservado à semântica de sucesso. */
+  --background: 218 57% 97%;          /* #F4F7FC */
+  --foreground: 217 33% 17%;
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
+  --card-foreground: 217 33% 17%;
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-  --chart-1: 12 76% 61%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
-  --sidebar: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-primary: 240 5.9% 10%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 240 5.9% 10%;
+  --popover-foreground: 217 33% 17%;
+  --primary: 221 99% 34%;             /* #0136AB */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 218 76% 95%;           /* #E9F0FC */
+  --secondary-foreground: 223 92% 24%; /* #052577 */
+  --muted: 218 76% 95%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 47 94% 52%;               /* #F8C613 */
+  --accent-foreground: 44 100% 21%;   /* #6B4E00 */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 215 91% 36%;                /* #084DB1 */
+  --chart-1: 221 99% 34%;
+  --chart-2: 47 94% 52%;
+  --chart-3: 223 92% 24%;
+  --chart-4: 215 91% 36%;
+  --chart-5: 160 84% 39%;             /* #10B981 — sucesso */
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 223 40% 25%;
+  --sidebar-primary: 221 99% 34%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 218 76% 95%;
+  --sidebar-accent-foreground: 223 92% 24%;
+  --sidebar-border: 214 32% 91%;
+  --sidebar-ring: 215 91% 36%;
+
+  /* Marca — tokens extras para uso direto */
+  --aj-navy: 223 92% 24%;
+  --aj-blue: 221 99% 34%;
+  --aj-blue-vivid: 215 91% 36%;
+  --aj-yellow: 47 94% 52%;
+  --aj-success: 160 84% 39%;
 
   --font-sans: 'Inter', sans-serif;
+  /* Display da marca. O wordmark do logo e Canva Sans Bold Italic, proprietaria
+     da Canva e nao embutivel como webfont; Plus Jakarta Sans e o substituto livre
+     mais proximo em proporcao e italico, e ja vem no bundle de fontes do index.html. */
+  --font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
   --radius: .5rem;
@@ -127,38 +141,45 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
-  --chart-1: 220 70% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
-  --sidebar: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 224.3 76.3% 48%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 240 4.9% 83.9%;
+  /* Auto Justo — modo escuro sobre o navy da marca */
+  --background: 222 60% 8%;
+  --foreground: 210 40% 98%;
+  --card: 222 55% 11%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 55% 11%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 215 91% 58%;             /* azul clareado p/ contraste no escuro */
+  --primary-foreground: 222 60% 8%;
+  --secondary: 222 45% 18%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 222 45% 18%;
+  --muted-foreground: 215 25% 68%;
+  --accent: 47 94% 52%;               /* #F8C613 */
+  --accent-foreground: 44 100% 12%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 222 40% 22%;
+  --input: 222 40% 22%;
+  --ring: 215 91% 58%;
+  --chart-1: 215 91% 58%;
+  --chart-2: 47 94% 52%;
+  --chart-3: 221 80% 45%;
+  --chart-4: 205 85% 62%;
+  --chart-5: 160 70% 48%;
+  --sidebar: 222 55% 11%;
+  --sidebar-foreground: 210 40% 96%;
+  --sidebar-primary: 215 91% 58%;
+  --sidebar-primary-foreground: 222 60% 8%;
+  --sidebar-accent: 222 45% 18%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 222 40% 22%;
+  --sidebar-ring: 215 91% 58%;
+
+  --aj-navy: 223 92% 24%;
+  --aj-blue: 215 91% 58%;
+  --aj-blue-vivid: 205 85% 62%;
+  --aj-yellow: 47 94% 52%;
+  --aj-success: 160 70% 48%;
 }
 
 @layer base {
@@ -171,6 +192,16 @@
 }
 
 @layer utilities {
+  /* Titulo com a assinatura da marca. Opt-in: nao altera h1-h6 por padrao.
+     Para o wordmark "Auto Justo" em si, use /logo-icon.png + o SVG do wordmark,
+     nunca esta classe — ela e uma aproximacao, nao a fonte do logo. */
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-style: italic;
+    letter-spacing: -0.02em;
+  }
+
   /* Hide ugly search cancel button in Chrome */
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;

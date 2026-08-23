@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auto Justo — T-04 Perfil da Oficina</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* ---- T-04: interface tradicional. Sem bolhas, sem input de mensagem. ---- */
+
+  /* Header próprio: voltar + nome da oficina + replay discreto */
+  .t4-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--aj-3);
+    padding: var(--aj-1) var(--aj-5) var(--aj-3);
+  }
+  .t4-back {
+    width: 32px; height: 32px; flex: 0 0 32px;
+    border: 0; padding: 0;
+    border-radius: var(--aj-r-pill);
+    background: var(--aj-surface);
+    box-shadow: var(--aj-shadow-card);
+    color: var(--aj-accent);
+    font-size: var(--aj-fs-lg);
+    line-height: 1;
+    display: grid; place-items: center;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .t4-header__title {
+    font-size: var(--aj-fs-body);
+    font-weight: 600;
+    color: var(--aj-ai-text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .t4-replay {
+    margin-left: auto;
+    border: 0; background: transparent;
+    color: var(--aj-text-2);
+    font-family: inherit;
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    cursor: pointer;
+    padding: var(--aj-1) var(--aj-2);
+    border-radius: var(--aj-r-pill);
+  }
+  .t4-replay:hover { background: rgba(148,163,184,.14); }
+
+  /* Área rolável — espaço extra pra barra fixa não cobrir conteúdo */
+  .t4-scroll { padding-bottom: 132px; gap: var(--aj-4); }
+
+  /* 1. Faixa de fotos — ÚNICO scroll horizontal da tela */
+  .t4-photos {
+    display: flex;
+    gap: var(--aj-2);
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 calc(-1 * var(--aj-5));
+    padding: 0 var(--aj-5) var(--aj-1);
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .t4-photos::-webkit-scrollbar { display: none; }
+  .t4-photo {
+    flex: 0 0 232px;
+    height: 132px;
+    border-radius: var(--aj-r-card);
+    scroll-snap-align: start;
+    position: relative;
+    display: grid; place-items: center;
+    box-shadow: var(--aj-shadow-card);
+    overflow: hidden;
+  }
+  .t4-photo span { font-size: 40px; opacity: .55; filter: grayscale(.15); }
+  .t4-photo::after {
+    content: attr(data-label);
+    position: absolute; left: var(--aj-3); bottom: var(--aj-3);
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(5,37,119,.55);
+    padding: 3px var(--aj-2);
+    border-radius: var(--aj-r-pill);
+    backdrop-filter: blur(4px);
+  }
+  .t4-photo--a { background: linear-gradient(140deg, #DCE7F2 0%, #B9CBDF 55%, #9FB6CE 100%); }
+  .t4-photo--b { background: linear-gradient(140deg, #E3ECF4 0%, #C6D6E6 50%, #A9BFD5 100%); }
+  .t4-photo--c { background: linear-gradient(140deg, #E8EEF3 0%, #CBD9E6 50%, #B2C4D6 100%); }
+
+  /* 2. Cabeçalho da oficina */
+  .t4-head__name {
+    font-size: var(--aj-fs-xl);
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--aj-ai-text);
+  }
+  .t4-head__rating {
+    display: flex; align-items: baseline; gap: var(--aj-2);
+    margin-top: var(--aj-2);
+  }
+  .t4-head__score {
+    font-size: var(--aj-fs-hero);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--aj-ai-text);
+  }
+  .t4-stars { color: #E07A00; font-size: var(--aj-fs-body); letter-spacing: 1px; }
+  .t4-head__count { font-size: var(--aj-fs-sm); color: var(--aj-text-2); }
+  .t4-head__meta {
+    margin-top: var(--aj-2);
+    font-size: var(--aj-fs-sm);
+    color: var(--aj-text-2);
+    display: flex; align-items: center; gap: var(--aj-2);
+  }
+  .t4-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--aj-text-2); display: inline-block; }
+  .t4-head__badges {
+    display: flex; flex-wrap: wrap; gap: var(--aj-2);
+    margin-top: var(--aj-4);
+  }
+  .t4-head__badges .aj-badge { padding: 5px var(--aj-3); }
+
+  /* 3. Chips de especialidade */
+  .t4-chips { display: flex; flex-wrap: wrap; gap: var(--aj-2); }
+  .t4-chip {
+    font-size: var(--aj-fs-sm);
+    font-weight: 500;
+    color: var(--aj-accent);
+    background: var(--aj-tint);
+    border: 1px solid var(--aj-border);
+    padding: 6px var(--aj-3);
+    border-radius: var(--aj-r-pill);
+  }
+
+  /* 4. Barras de avaliação detalhada */
+  .t4-meter + .t4-meter { margin-top: var(--aj-3); }
+  .t4-meter__top {
+    display: flex; align-items: baseline; gap: var(--aj-2);
+    margin-bottom: 5px;
+  }
+  .t4-meter__label { font-size: var(--aj-fs-sm); color: var(--aj-ai-text); }
+  .t4-meter__value {
+    margin-left: auto;
+    font-size: var(--aj-fs-sm);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--aj-ai-text);
+  }
+  .t4-meter__track {
+    height: 6px;
+    border-radius: var(--aj-r-pill);
+    background: #EDF1F6;
+    overflow: hidden;
+  }
+  .t4-meter__fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: var(--aj-r-pill);
+    background: linear-gradient(90deg, #084DB1 0%, var(--aj-accent) 100%);
+    transition: width 820ms var(--aj-ease);
+  }
+  .t4-meter--top .t4-meter__fill { background: linear-gradient(90deg, #34D399 0%, var(--aj-success) 100%); }
+  .t4-scale {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: var(--aj-text-2);
+    margin-top: var(--aj-3);
+    letter-spacing: .06em;
+  }
+
+  /* 5. Card do selo respeitoso */
+  .t4-selo { border: 1px solid rgba(236,72,153,.28); }
+  .t4-selo__head { display: flex; align-items: center; gap: var(--aj-3); }
+  .t4-selo__mark {
+    width: 40px; height: 40px; flex: 0 0 40px;
+    border-radius: var(--aj-r-pill);
+    background: rgba(236,72,153,.12);
+    color: var(--aj-respeito);
+    display: grid; place-items: center;
+    font-size: var(--aj-fs-lg);
+  }
+  .t4-selo__title { font-size: var(--aj-fs-body); font-weight: 600; color: #BE185D; }
+  .t4-selo__text {
+    font-size: var(--aj-fs-sm);
+    line-height: var(--aj-lh-body);
+    color: var(--aj-ai-text);
+    margin: var(--aj-3) 0 var(--aj-3);
+  }
+  .t4-selo__data {
+    display: flex; align-items: center; gap: var(--aj-2);
+    background: rgba(236,72,153,.07);
+    border-radius: var(--aj-3);
+    padding: var(--aj-3);
+    font-size: var(--aj-fs-sm);
+    font-weight: 600;
+    color: #BE185D;
+  }
+
+  /* 6. Comentários */
+  .t4-comment { padding: var(--aj-3) 0; }
+  .t4-comment + .t4-comment { border-top: 1px solid var(--aj-border); }
+  .t4-comment__head { display: flex; align-items: center; gap: var(--aj-3); }
+  .t4-avatar {
+    width: 36px; height: 36px; flex: 0 0 36px;
+    border-radius: var(--aj-r-pill);
+    display: grid; place-items: center;
+    color: #fff; font-weight: 700; font-size: var(--aj-fs-sm);
+    background: var(--aj-accent);
+  }
+  .t4-avatar--r { background: var(--aj-respeito); }
+  .t4-avatar--g { background: #0F766E; }
+  .t4-comment__name { font-size: var(--aj-fs-sm); font-weight: 600; }
+  .t4-comment__date { font-size: var(--aj-fs-caps); color: var(--aj-text-2); margin-top: 1px; }
+  .t4-comment__note {
+    margin-left: auto;
+    font-size: var(--aj-fs-sm);
+    font-weight: 700;
+    color: var(--aj-ai-text);
+    white-space: nowrap;
+  }
+  .t4-comment__note i { font-style: normal; color: #E07A00; }
+  .t4-comment__text {
+    font-size: var(--aj-fs-sm);
+    line-height: var(--aj-lh-body);
+    color: var(--aj-ai-text);
+    margin-top: var(--aj-2);
+  }
+  .t4-comment__tag {
+    display: inline-block;
+    margin-top: var(--aj-2);
+    font-size: 10px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700;
+    color: #BE185D;
+  }
+
+  /* 7. Contato e horário */
+  .t4-info { display: flex; gap: var(--aj-3); font-size: var(--aj-fs-sm); line-height: var(--aj-lh-body); }
+  .t4-info + .t4-info { margin-top: var(--aj-3); }
+  .t4-info__icon { width: 20px; flex: 0 0 20px; text-align: center; opacity: .7; }
+  .t4-info__label { color: var(--aj-text-2); font-size: var(--aj-fs-caps); letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+  .t4-hours { margin-top: 2px; }
+  .t4-hours b { font-weight: 600; }
+  .t4-contact-btns { display: flex; gap: var(--aj-2); margin-top: var(--aj-4); }
+  .t4-contact-btns .aj-btn { padding: var(--aj-3); font-size: var(--aj-fs-sm); }
+  .t4-note {
+    font-size: var(--aj-fs-caps);
+    color: var(--aj-text-2);
+    margin-top: var(--aj-3);
+    line-height: 1.5;
+  }
+
+  /* Linha discreta de continuidade */
+  .t4-next {
+    text-align: center;
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    color: var(--aj-text-2);
+    font-weight: 600;
+    padding: var(--aj-2) 0 0;
+  }
+
+  /* 8. Barra de ação fixa, sobreposta */
+  .t4-actionbar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--aj-surface);
+    box-shadow: 0 -6px 24px rgba(15,23,42,.10);
+    padding: var(--aj-4) var(--aj-5) var(--aj-6);
+    display: flex; flex-direction: column; gap: var(--aj-2);
+  }
+  .t4-actionbar .aj-btn--ghost { border-color: transparent; padding: var(--aj-2); }
+
+  .t4-toast {
+    position: absolute; left: var(--aj-5); right: var(--aj-5); bottom: 148px;
+    background: var(--aj-user-bubble);
+    color: #fff;
+    border-radius: var(--aj-3);
+    padding: var(--aj-3) var(--aj-4);
+    font-size: var(--aj-fs-sm);
+    text-align: center;
+    opacity: 0; transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 240ms var(--aj-ease), transform 240ms var(--aj-ease);
+  }
+  .t4-toast.is-on { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<div class="aj-device">
+
+  <div class="aj-statusbar">
+    <span>9:41</span>
+    <span>▮▮▮ ⌁ 87%</span>
+  </div>
+
+  <!-- Header próprio: interface tradicional, não conversa -->
+  <div class="t4-header">
+    <button class="t4-back" type="button" aria-label="Voltar">←</button>
+    <div class="t4-header__title">Oficina Silva</div>
+    <button class="t4-replay" id="replay" type="button">↻ replay</button>
+  </div>
+
+  <div class="aj-scroll t4-scroll" id="scroll">
+
+    <!-- 1. FOTOS — único carrossel horizontal da tela -->
+    <div class="t4-photos aj-enter" id="photos">
+      <div class="t4-photo t4-photo--a" data-label="Fachada"><span>🏪</span></div>
+      <div class="t4-photo t4-photo--b" data-label="Box de serviço"><span>🔧</span></div>
+      <div class="t4-photo t4-photo--c" data-label="Recepção"><span>🪑</span></div>
+    </div>
+
+    <!-- 2. CABEÇALHO -->
+    <div class="aj-card aj-enter">
+      <div class="t4-head__name">Oficina Silva</div>
+      <div class="t4-head__rating">
+        <span class="t4-head__score">4.8</span>
+        <span class="t4-stars">★★★★★</span>
+        <span class="t4-head__count">127 avaliações</span>
+      </div>
+      <div class="t4-head__meta">
+        <span>1,2 km de você</span>
+        <i class="t4-dot"></i>
+        <span>Rua das Oliveiras, 320 — Santo Amaro</span>
+      </div>
+      <div class="t4-head__badges">
+        <span class="aj-badge aj-badge--success">✓ CNPJ verificado</span>
+        <span class="aj-badge aj-badge--respeito">♀ Atendimento respeitoso</span>
+      </div>
+    </div>
+
+    <!-- 3. ESPECIALIDADES -->
+    <div class="aj-card aj-enter">
+      <div class="aj-card__caps">Especialidades</div>
+      <div class="t4-chips">
+        <span class="t4-chip">Suspensão</span>
+        <span class="t4-chip">Direção</span>
+        <span class="t4-chip">Freios</span>
+        <span class="t4-chip">Alinhamento</span>
+      </div>
+    </div>
+
+    <!-- 4. AVALIAÇÕES DETALHADAS -->
+    <div class="aj-card aj-enter" id="meters-card">
+      <div class="aj-card__caps">Avaliações detalhadas</div>
+
+      <div class="t4-meter t4-meter--top">
+        <div class="t4-meter__top">
+          <span class="t4-meter__label">Clareza do orçamento</span>
+          <span class="t4-meter__value">4.9</span>
+        </div>
+        <div class="t4-meter__track"><b class="t4-meter__fill" data-score="4.9"></b></div>
+      </div>
+
+      <div class="t4-meter">
+        <div class="t4-meter__top">
+          <span class="t4-meter__label">Qualidade das peças</span>
+          <span class="t4-meter__value">4.7</span>
+        </div>
+        <div class="t4-meter__track"><b class="t4-meter__fill" data-score="4.7"></b></div>
+      </div>
+
+      <div class="t4-meter">
+        <div class="t4-meter__top">
+          <span class="t4-meter__label">Qualidade do serviço</span>
+          <span class="t4-meter__value">4.8</span>
+        </div>
+        <div class="t4-meter__track"><b class="t4-meter__fill" data-score="4.8"></b></div>
+      </div>
+
+      <div class="t4-meter">
+        <div class="t4-meter__top">
+          <span class="t4-meter__label">Prazos</span>
+          <span class="t4-meter__value">4.6</span>
+        </div>
+        <div class="t4-meter__track"><b class="t4-meter__fill" data-score="4.6"></b></div>
+      </div>
+
+      <div class="t4-meter">
+        <div class="t4-meter__top">
+          <span class="t4-meter__label">Garantia</span>
+          <span class="t4-meter__value">4.8</span>
+        </div>
+        <div class="t4-meter__track"><b class="t4-meter__fill" data-score="4.8"></b></div>
+      </div>
+
+      <div class="t4-meter t4-meter--top">
+        <div class="t4-meter__top">
+          <span class="t4-meter__label">Atendimento</span>
+          <span class="t4-meter__value">4.9</span>
+        </div>
+        <div class="t4-meter__track"><b class="t4-meter__fill" data-score="4.9"></b></div>
+      </div>
+
+      <div class="t4-meter">
+        <div class="t4-meter__top">
+          <span class="t4-meter__label">Preço</span>
+          <span class="t4-meter__value">4.5</span>
+        </div>
+        <div class="t4-meter__track"><b class="t4-meter__fill" data-score="4.5"></b></div>
+      </div>
+
+      <div class="t4-meter">
+        <div class="t4-meter__top">
+          <span class="t4-meter__label">Organização</span>
+          <span class="t4-meter__value">4.7</span>
+        </div>
+        <div class="t4-meter__track"><b class="t4-meter__fill" data-score="4.7"></b></div>
+      </div>
+
+      <div class="t4-scale"><span>0</span><span>Média por critério</span><span>5</span></div>
+    </div>
+
+    <!-- 5. SELO RESPEITOSO -->
+    <div class="aj-card t4-selo aj-enter">
+      <div class="t4-selo__head">
+        <div class="t4-selo__mark">♀</div>
+        <div>
+          <div class="t4-selo__title">Atendimento respeitoso</div>
+          <div class="t4-comment__date">Selo Auto Justo</div>
+        </div>
+      </div>
+      <p class="t4-selo__text">
+        Este selo vem das avaliações de clientes mulheres que passaram por aqui.
+        Quanto mais mulheres avaliam bem, mais forte a evidência de atendimento justo e sem cobrança a mais.
+      </p>
+      <div class="t4-selo__data">
+        <span>★</span>
+        <span>38 avaliações de mulheres · 4.9 de média</span>
+      </div>
+    </div>
+
+    <!-- 6. COMENTÁRIOS -->
+    <div class="aj-card aj-enter">
+      <div class="aj-card__caps">Comentários</div>
+
+      <div class="t4-comment">
+        <div class="t4-comment__head">
+          <div class="t4-avatar t4-avatar--r">C</div>
+          <div>
+            <div class="t4-comment__name">Camila R.</div>
+            <div class="t4-comment__date">12 de agosto</div>
+          </div>
+          <div class="t4-comment__note"><i>★</i> 5.0</div>
+        </div>
+        <p class="t4-comment__text">
+          Fui sozinha e pela primeira vez não me trataram como se eu não entendesse nada.
+          O Silva explicou peça por peça, mostrou a antiga e o preço foi o mesmo do orçamento.
+        </p>
+        <span class="t4-comment__tag">Avaliação que alimenta o selo</span>
+      </div>
+
+      <div class="t4-comment">
+        <div class="t4-comment__head">
+          <div class="t4-avatar">M</div>
+          <div>
+            <div class="t4-comment__name">Marcos A.</div>
+            <div class="t4-comment__date">3 de agosto</div>
+          </div>
+          <div class="t4-comment__note"><i>★</i> 4.0</div>
+        </div>
+        <p class="t4-comment__text">
+          Serviço de suspensão bem feito, barulho sumiu. Só atrasou meio dia porque a peça
+          demorou pra chegar, mas me avisaram antes.
+        </p>
+      </div>
+
+      <div class="t4-comment">
+        <div class="t4-comment__head">
+          <div class="t4-avatar t4-avatar--g">J</div>
+          <div>
+            <div class="t4-comment__name">Juliano P.</div>
+            <div class="t4-comment__date">27 de julho</div>
+          </div>
+          <div class="t4-comment__note"><i>★</i> 5.0</div>
+        </div>
+        <p class="t4-comment__text">
+          Orçamento detalhado no papel, peça e mão de obra separadas. Deram 3 meses de garantia
+          por escrito. Oficina limpa e organizada.
+        </p>
+      </div>
+    </div>
+
+    <!-- 7. CONTATO E HORÁRIO -->
+    <div class="aj-card aj-enter">
+      <div class="aj-card__caps">Contato e horário</div>
+
+      <div class="t4-info">
+        <span class="t4-info__icon">📍</span>
+        <div>
+          <div class="t4-info__label">Endereço</div>
+          <div class="t4-hours">Rua das Oliveiras, 320 — Santo Amaro, São Paulo · 1,2 km</div>
+        </div>
+      </div>
+
+      <div class="t4-info">
+        <span class="t4-info__icon">🕘</span>
+        <div>
+          <div class="t4-info__label">Horário</div>
+          <div class="t4-hours"><b>Seg a sex</b> 8h às 18h</div>
+          <div class="t4-hours"><b>Sábado</b> 8h às 13h</div>
+          <div class="t4-hours" style="color:var(--aj-text-2)"><b>Domingo</b> fechado</div>
+        </div>
+      </div>
+
+      <div class="t4-contact-btns">
+        <button class="aj-btn aj-btn--success" type="button" data-toast="Abrindo o WhatsApp da Oficina Silva…">WhatsApp</button>
+        <button class="aj-btn aj-btn--ghost" type="button" data-toast="Abrindo o discador: (11) 4002-8922">Ligar</button>
+      </div>
+      <div class="t4-note">A conversa é direta com a oficina — a Auto Justo não intermedia a ligação.</div>
+    </div>
+
+    <div class="t4-next aj-enter">Continua em T-05 Orçamentos →</div>
+
+  </div>
+
+  <!-- 8. BARRA DE AÇÃO FIXA -->
+  <div class="t4-actionbar">
+    <button class="aj-btn" type="button" data-toast="Vamos escolher o horário na próxima tela." data-aj-go="T06-agendamento.html">Agendar nesta oficina</button>
+    <button class="aj-btn aj-btn--ghost" type="button" data-toast="Pedido enviado. Resposta em até 24h." data-aj-go="T05-orcamentos.html">Pedir orçamento</button>
+  </div>
+
+  <div class="t4-toast" id="toast"></div>
+
+</div>
+
+<script src="aj.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var scroll  = document.getElementById('scroll');
+  var nodes   = scroll.querySelectorAll('.aj-enter');
+  var metersCard = document.getElementById('meters-card');
+  var fills   = metersCard.querySelectorAll('.t4-meter__fill');
+  var replay  = document.getElementById('replay');
+  var toast   = document.getElementById('toast');
+  var STAGGER = 120;
+
+  /* índice do card de barras dentro da sequência de reveal */
+  var meterIndex = Array.prototype.indexOf.call(nodes, metersCard);
+
+  function fillBars() {
+    Array.prototype.forEach.call(fills, function (b, i) {
+      var pct = (parseFloat(b.getAttribute('data-score')) / 5) * 100;
+      setTimeout(function () { b.style.width = pct.toFixed(1) + '%'; }, AJ.reduce ? 0 : i * 70);
+    });
+  }
+
+  function resetBars() {
+    Array.prototype.forEach.call(fills, function (b) { b.style.width = '0%'; });
+  }
+
+  function play() {
+    AJ.reveal(nodes, STAGGER);
+    setTimeout(fillBars, AJ.reduce ? 0 : meterIndex * STAGGER + 200);
+  }
+
+  replay.addEventListener('click', function () {
+    Array.prototype.forEach.call(nodes, function (n) { n.classList.remove('is-in'); });
+    resetBars();
+    scroll.scrollTop = 0;
+    setTimeout(play, 60);
+  });
+
+  /* Toasts: as ações são só demonstração de protótipo */
+  var toastTimer;
+  document.querySelectorAll('[data-toast]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      toast.textContent = btn.getAttribute('data-toast');
+      toast.classList.add('is-on');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { toast.classList.remove('is-on'); }, 2200);
+    });
+  });
+
+  document.querySelector('.t4-back').addEventListener('click', function () {
+    toast.textContent = 'Voltando para as oficinas recomendadas…';
+    toast.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('is-on'); }, 1800);
+  });
+
+  play();
+})();
+</script>
+</body>
+</html>

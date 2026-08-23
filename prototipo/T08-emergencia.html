@@ -1,0 +1,548 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auto Justo — T-08 Emergência</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* ——— Extras locais da T-08 (não altera tokens.css) ———
+     Modo emergência muda o RITMO, não a identidade:
+     mesma paleta, só acentuada com âmbar (#E07A00). */
+
+  /* Badge de contexto no header: normal → emergência */
+  .aj-header__ctx{
+    transition: background var(--aj-dur) var(--aj-ease),
+                border-color var(--aj-dur) var(--aj-ease),
+                color var(--aj-dur) var(--aj-ease),
+                transform 220ms var(--aj-spring),
+                opacity 180ms var(--aj-ease);
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  .aj-header__ctx.is-swap{ opacity:0; transform:scale(.92); }
+  .aj-header__ctx.is-emerg{
+    background:rgba(224,122,0,.14);
+    border-color:rgba(224,122,0,.60);
+    color:#9A4A00;
+    font-weight:700;
+    font-size:var(--aj-fs-caps);
+    letter-spacing:.10em;
+    text-transform:uppercase;
+  }
+  .t-dot{
+    width:8px; height:8px; flex:0 0 8px; border-radius:var(--aj-r-pill);
+    background:#EF4444; display:inline-block;
+    animation:t-pulse 1.1s var(--aj-ease) infinite;
+  }
+  @keyframes t-pulse{ 0%,100%{ opacity:1; transform:none } 50%{ opacity:.25; transform:scale(.8) } }
+
+  /* Fio âmbar no topo enquanto o modo emergência está ativo */
+  .t-wire{
+    height:3px; flex:0 0 3px; width:100%;
+    background:linear-gradient(90deg,#E07A00,#EF4444,#E07A00);
+    background-size:200% 100%;
+    opacity:0; transition:opacity var(--aj-dur) var(--aj-ease);
+  }
+  .t-wire.is-on{ opacity:1; animation:t-slide 2.4s linear infinite; }
+  @keyframes t-slide{ to{ background-position:-200% 0 } }
+
+  .t-topbar{
+    flex:0 0 auto; display:flex; align-items:center;
+    padding:0 var(--aj-5) var(--aj-1);
+  }
+  .t-replay{
+    margin-left:auto; border:0; background:transparent; cursor:pointer;
+    font-family:inherit; font-size:11px; font-weight:600;
+    color:var(--aj-text-2); padding:5px var(--aj-2); border-radius:var(--aj-r-pill);
+  }
+  .t-replay:hover{ color:var(--aj-accent); }
+
+  /* IA digitando — mais rápido que nas outras telas */
+  .t-typing{ align-self:flex-start; display:flex; gap:5px; padding:var(--aj-1) 0; }
+  .t-typing span{
+    width:7px; height:7px; border-radius:var(--aj-r-pill);
+    background:var(--aj-warn); opacity:.5;
+    animation:t-bounce .72s var(--aj-ease) infinite;
+  }
+  .t-typing span:nth-child(2){ animation-delay:.09s; }
+  .t-typing span:nth-child(3){ animation-delay:.18s; }
+  @keyframes t-bounce{ 0%,60%,100%{ transform:none; opacity:.30 } 30%{ transform:translateY(-5px); opacity:.9 } }
+
+  /* Fala da IA em emergência: curta e um pouco maior */
+  .aj-msg-ai.t-strong{ font-size:var(--aj-fs-lg); line-height:1.45; font-weight:500; }
+
+  /* Card fixo de localização — acompanha a rolagem */
+  .t-locwrap{
+    position:sticky; top:0; z-index:5;
+    align-self:stretch;
+    background:var(--aj-bg);
+    margin-top:calc(var(--aj-2) * -1);
+    padding:var(--aj-2) 0;
+  }
+  .t-loc{ padding:var(--aj-3) var(--aj-4) var(--aj-4); }
+  .t-map{
+    height:86px; border-radius:var(--aj-3); overflow:hidden; position:relative;
+    background:
+      repeating-linear-gradient(0deg,  transparent 0 19px, rgba(148,163,184,.16) 19px 20px),
+      repeating-linear-gradient(90deg, transparent 0 19px, rgba(148,163,184,.16) 19px 20px),
+      var(--aj-tint);
+    margin-bottom:var(--aj-3);
+  }
+  .t-map__road{
+    position:absolute; left:-14%; right:-14%; top:52%;
+    height:20px; background:#fff; transform:rotate(-7deg);
+    box-shadow:0 0 0 1px rgba(148,163,184,.22);
+  }
+  .t-map__road::after{
+    content:""; position:absolute; left:0; right:0; top:9px; height:2px;
+    background:repeating-linear-gradient(90deg, rgba(148,163,184,.55) 0 10px, transparent 10px 20px);
+  }
+  .t-map__pin{
+    position:absolute; left:50%; top:50%; width:14px; height:14px; margin:-7px 0 0 -7px;
+    border-radius:var(--aj-r-pill); background:var(--aj-accent);
+    box-shadow:0 0 0 3px #fff;
+  }
+  .t-map__pin::before{
+    content:""; position:absolute; inset:-11px; border-radius:var(--aj-r-pill);
+    background:rgba(5,37,119,.18); animation:t-ripple 2s var(--aj-ease) infinite;
+  }
+  @keyframes t-ripple{ 0%{ transform:scale(.5); opacity:.9 } 100%{ transform:scale(1.5); opacity:0 } }
+  .t-map__tag{
+    position:absolute; left:var(--aj-2); bottom:var(--aj-2);
+    background:rgba(255,255,255,.92); border-radius:var(--aj-r-pill);
+    font-size:10px; font-weight:600; color:var(--aj-text-2);
+    padding:3px var(--aj-2); letter-spacing:.06em; text-transform:uppercase;
+  }
+  .t-addr{ font-size:var(--aj-fs-body); font-weight:600; line-height:1.4; }
+  .t-addr small{ display:block; font-size:var(--aj-fs-sm); font-weight:400; color:var(--aj-text-2); margin-top:2px; }
+
+  /* Botões grandes — alvo de toque generoso no modo emergência */
+  .t-choices{ align-self:stretch; display:flex; flex-direction:column; gap:var(--aj-2); }
+  .t-choice{
+    display:block; width:100%; min-height:62px;
+    padding:var(--aj-4) var(--aj-5);
+    border:1px solid var(--aj-border); background:var(--aj-surface);
+    border-radius:var(--aj-r-card);
+    box-shadow:var(--aj-shadow-card);
+    font-family:inherit; font-size:var(--aj-fs-lg); font-weight:600;
+    color:var(--aj-ai-text); text-align:left; cursor:pointer;
+    transition:transform 170ms var(--aj-spring), background var(--aj-dur) var(--aj-ease);
+  }
+  .t-choice:active{ transform:scale(.98); background:var(--aj-tint); }
+  .t-choice--alert{ border-color:rgba(224,122,0,.55); background:rgba(224,122,0,.07); color:#9A4A00; }
+  .t-choice--go{ background:var(--aj-accent); color:#fff; border-color:var(--aj-accent); text-align:center; }
+
+  /* Aviso de segurança */
+  .t-safe{
+    align-self:stretch; background:var(--aj-surface);
+    border-radius:var(--aj-r-card); box-shadow:var(--aj-shadow-card);
+    border-left:4px solid var(--aj-warn);
+    padding:var(--aj-4);
+  }
+  .t-safe__caps{
+    font-size:var(--aj-fs-caps); letter-spacing:.12em; text-transform:uppercase;
+    color:#9A4A00; font-weight:700; margin-bottom:var(--aj-2);
+  }
+  .t-safe p{ margin:0 0 var(--aj-2); font-size:var(--aj-fs-sm); line-height:1.6; color:var(--aj-ai-text); }
+  .t-safe p:last-child{ margin-bottom:0; }
+  .t-safe b{ font-weight:600; }
+
+  /* Itens de guincho / oficina */
+  .t-item{ padding:var(--aj-3) 0; }
+  .t-item + .t-item{ border-top:1px solid var(--aj-border); }
+  .t-item__head{ display:flex; align-items:flex-start; gap:var(--aj-3); margin-bottom:var(--aj-3); }
+  .t-item__thumb{
+    width:44px; height:44px; flex:0 0 44px; border-radius:var(--aj-3);
+    background:var(--aj-tint); display:grid; place-items:center; font-size:var(--aj-fs-lg);
+  }
+  .t-item__main{ min-width:0; flex:1 1 auto; }
+  .t-item__title{ font-size:var(--aj-fs-body); font-weight:600; line-height:1.3; }
+  .t-item__sub{ font-size:var(--aj-fs-sm); color:var(--aj-text-2); margin-top:3px; line-height:1.45; }
+  .t-item__eta{ font-size:var(--aj-fs-sm); font-weight:600; color:#9A4A00; margin-top:3px; }
+  .t-item__tags{ display:flex; flex-wrap:wrap; gap:var(--aj-1); margin-top:var(--aj-2); }
+  .t-rate{ font-size:var(--aj-fs-sm); font-weight:600; color:var(--aj-ai-text); white-space:nowrap; }
+  .t-rate small{ font-weight:400; color:var(--aj-text-2); }
+  .t-norate{ font-size:var(--aj-fs-sm); color:var(--aj-text-2); font-style:italic; }
+
+  .t-acts{ display:flex; gap:var(--aj-2); }
+  .t-act{
+    flex:1 1 0; min-height:52px;
+    border:0; border-radius:var(--aj-r-pill);
+    background:var(--aj-accent); color:#fff;
+    font-family:inherit; font-size:var(--aj-fs-body); font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:var(--aj-2);
+    transition:transform 170ms var(--aj-spring), background var(--aj-dur) var(--aj-ease), opacity var(--aj-dur) var(--aj-ease);
+  }
+  .t-act:active{ transform:scale(.98); }
+  .t-act--wa{ background:var(--aj-success); }
+  .t-act.is-done{ opacity:.62; }
+
+  .t-note{
+    margin-top:var(--aj-3); padding-top:var(--aj-3);
+    border-top:1px solid var(--aj-border);
+    font-size:var(--aj-fs-sm); line-height:1.6; color:var(--aj-text-2);
+  }
+
+  .t-share{ min-height:52px; display:flex; align-items:center; justify-content:center; gap:var(--aj-2); }
+  .t-share.is-done{ background:var(--aj-success); }
+
+  .t-emerg-num{
+    align-self:stretch; display:flex; gap:var(--aj-2);
+  }
+  .t-emerg-num a{
+    flex:1 1 0; text-decoration:none; text-align:center;
+    border:1px solid var(--aj-border); background:var(--aj-surface);
+    border-radius:var(--aj-r-pill); padding:var(--aj-3);
+    font-size:var(--aj-fs-sm); font-weight:600; color:var(--aj-accent);
+  }
+</style>
+</head>
+<body><div class="aj-device">
+<div class="t-wire" id="wire"></div>
+<div class="aj-statusbar"><span>9:41</span><span>▮▮▮ ▾</span></div>
+
+<header class="aj-header">
+  <div class="aj-header__avatar">AJ</div>
+  <div class="aj-header__name">Auto Justo</div>
+  <div class="aj-header__ctx" id="ctx">🚗 HB20 2018</div>
+</header>
+
+<div class="t-topbar">
+  <button type="button" class="t-replay" id="replay">↻ replay</button>
+</div>
+
+<main class="aj-scroll" id="scroll">
+  <!-- card fixo de localização (entra quando a emergência é reconhecida) -->
+  <div class="t-locwrap" id="locwrap" hidden>
+    <div class="aj-card t-loc aj-enter" id="loccard">
+      <div class="aj-card__caps">Sua localização agora</div>
+      <div class="t-map">
+        <div class="t-map__road"></div>
+        <div class="t-map__pin"></div>
+        <div class="t-map__tag">Localização aproximada</div>
+      </div>
+      <div class="t-addr">Av. Washington Luís, altura do nº 4200
+        <small>São Paulo/SP · precisão de cerca de 30 m</small>
+      </div>
+      <button type="button" class="aj-btn t-share" id="share" style="margin-top:var(--aj-3)">
+        <span id="shareTxt">📍 Compartilhar minha localização</span>
+      </button>
+    </div>
+  </div>
+
+  <section id="conv" style="display:flex;flex-direction:column;gap:var(--aj-5);"></section>
+</main>
+
+<footer class="aj-input">
+  <input class="aj-input__field" id="field" placeholder="Mensagem" autocomplete="off">
+  <button type="button" class="aj-input__send" id="send">↑</button>
+</footer>
+</div>
+
+<script src="aj.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var scroll  = document.getElementById('scroll');
+  var conv    = document.getElementById('conv');
+  var ctx     = document.getElementById('ctx');
+  var wire    = document.getElementById('wire');
+  var locwrap = document.getElementById('locwrap');
+  var loccard = document.getElementById('loccard');
+  var field   = document.getElementById('field');
+  var shareBt = document.getElementById('share');
+  var shareTx = document.getElementById('shareTxt');
+
+  var run = 0;                       /* cancela o roteiro anterior */
+
+  /* ---------- helpers ---------- */
+  function el(cls, html) {
+    var d = document.createElement('div');
+    d.className = cls;
+    if (html != null) d.innerHTML = html;
+    return d;
+  }
+  function ck(id) { return id === run ? Promise.resolve() : Promise.reject('cancel'); }
+  function down() { AJ.scrollDown(scroll); }
+
+  function addUser(text) {
+    var d = el('aj-msg-user aj-enter', text);
+    conv.appendChild(d); down();
+    return AJ.reveal([d]).then(down).then(function () { return d; });
+  }
+
+  /* Em emergência a IA digita mais rápido e fala menos. */
+  function addAI(text, opts) {
+    opts = opts || {};
+    var t = el('t-typing aj-enter', '<span></span><span></span><span></span>');
+    conv.appendChild(t); t.classList.add('is-in'); down();
+    return AJ.wait(opts.pause == null ? 520 : opts.pause).then(function () {
+      t.parentNode && t.parentNode.removeChild(t);
+      var d = el('aj-msg-ai aj-enter' + (opts.strong ? ' t-strong' : ''));
+      conv.appendChild(d); d.classList.add('is-in');
+      return AJ.typeText(d, text, 22).then(down);
+    });
+  }
+
+  function addNode(node) {
+    conv.appendChild(node); down();
+    return AJ.reveal([node]).then(down).then(function () { return node; });
+  }
+
+  /* Grupo de botões grandes. Resolve com o valor escolhido e vira bolha do usuário. */
+  function choices(id, list) {
+    var box = el('t-choices aj-enter');
+    list.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 't-choice' + (c.style ? ' t-choice--' + c.style : '');
+      b.textContent = c.label;
+      b.setAttribute('data-v', c.value);
+      box.appendChild(b);
+    });
+    return addNode(box).then(function () {
+      return new Promise(function (resolve) {
+        box.addEventListener('click', function (e) {
+          var b = e.target.closest('button[data-v]');
+          if (!b || id !== run) return;
+          var v = b.getAttribute('data-v');
+          var label = b.textContent;
+          box.parentNode.removeChild(box);
+          addUser(label).then(function () { resolve(v); });
+        });
+      });
+    });
+  }
+
+  /* ---------- modo emergência: troca o badge do header ---------- */
+  function emergencyOn() {
+    ctx.classList.add('is-swap');
+    return AJ.wait(200).then(function () {
+      ctx.classList.add('is-emerg');
+      ctx.innerHTML = '<span class="t-dot"></span>Modo emergência';
+      ctx.classList.remove('is-swap');
+      wire.classList.add('is-on');
+      locwrap.hidden = false;
+      requestAnimationFrame(function () { loccard.classList.add('is-in'); });
+      down();
+      return AJ.wait(260);
+    });
+  }
+  function emergencyOff() {
+    wire.classList.remove('is-on');
+    ctx.classList.remove('is-emerg', 'is-swap');
+    ctx.textContent = '🚗 HB20 2018';
+    locwrap.hidden = true;
+    loccard.classList.remove('is-in');
+    shareBt.classList.remove('is-done');
+    shareBt.disabled = false;
+    shareTx.textContent = '📍 Compartilhar minha localização';
+  }
+
+  /* ---------- aviso de segurança ---------- */
+  function safetyCard() {
+    return addNode(el('t-safe aj-enter',
+      '<div class="t-safe__caps">Antes de qualquer coisa</div>' +
+      '<p>Enquanto a ajuda não chega, <b>não mexa em nenhuma peça do carro, não empurre o veículo e não tente fazer reparo na via</b>. ' +
+      'Tudo o que eu vou te pedir aqui é olhar e se afastar do carro — nada além disso.</p>' +
+      '<p>Se em algum momento você sentir risco, para tudo, sai de perto do veículo e aciona ajuda: 193 Bombeiros ou 190 Polícia.</p>'
+    ));
+  }
+
+  /* ---------- saída 1: guinchos ---------- */
+  function guinchoCard() {
+    var g = [
+      { n: 'Guincho Rápido Zona Sul', d: '1,8 km de você', eta: 'Chega em cerca de 10 min', r: '4,8 ★', c: '124 avaliações' },
+      { n: 'Reboque Washington 24h',  d: '3,2 km de você', eta: 'Chega em cerca de 15 min', r: '4,5 ★', c: '61 avaliações' },
+      { n: 'Auto Socorro Ipiranga',   d: '4,6 km de você', eta: 'Chega em cerca de 22 min', r: null,   c: null }
+    ];
+    var card = el('aj-card aj-enter');
+    var html = '<div class="aj-card__caps">Guincho perto de você</div>';
+    g.forEach(function (x, i) {
+      html +=
+        '<div class="t-item">' +
+          '<div class="t-item__head">' +
+            '<div class="t-item__thumb">🛻</div>' +
+            '<div class="t-item__main">' +
+              '<div class="t-item__title">' + x.n + '</div>' +
+              '<div class="t-item__sub">' + x.d + '</div>' +
+              '<div class="t-item__eta">' + x.eta + '</div>' +
+              '<div class="t-item__tags">' +
+                (x.r
+                  ? '<span class="t-rate">' + x.r + ' <small>· ' + x.c + '</small></span>'
+                  : '<span class="t-norate">Sem avaliações ainda</span>') +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="t-acts">' +
+            '<button type="button" class="t-act" data-call="' + x.n + '">📞 Ligar</button>' +
+          '</div>' +
+        '</div>';
+    });
+    html +=
+      '<div class="t-note">Essa lista existe porque quem usa o Auto Justo normalmente não tem seguro nem app de assistência. ' +
+      'Os contatos de guincho já vêm prontos aqui para você não ter que procurar no Google com o carro parado na rua.</div>';
+    card.innerHTML = html;
+    return addNode(card);
+  }
+
+  /* ---------- saída 2: oficinas ---------- */
+  function oficinaCard() {
+    var o = [
+      { n: 'Oficina do Nilson',        d: '1,2 km de você · aberta até 22h', tag: 'Atende emergência', r: '4,9 ★', c: '203 avaliações' },
+      { n: 'Mecânica Silva 24h',       d: '2,7 km de você · aberta agora',   tag: '24h',                r: '4,6 ★', c: '88 avaliações' },
+      { n: 'Auto Center Vila Mariana', d: '3,4 km de você · aberta até 20h', tag: 'Atende emergência', r: '4,4 ★', c: '47 avaliações' }
+    ];
+    var card = el('aj-card aj-enter');
+    var html = '<div class="aj-card__caps">Oficinas que atendem agora</div>';
+    o.forEach(function (x) {
+      html +=
+        '<div class="t-item">' +
+          '<div class="t-item__head">' +
+            '<div class="t-item__thumb">🔧</div>' +
+            '<div class="t-item__main">' +
+              '<div class="t-item__title">' + x.n + '</div>' +
+              '<div class="t-item__sub">' + x.d + '</div>' +
+              '<div class="t-item__tags">' +
+                '<span class="aj-badge aj-badge--warn">' + x.tag + '</span>' +
+                '<span class="t-rate">' + x.r + ' <small>· ' + x.c + '</small></span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="t-acts">' +
+            '<button type="button" class="t-act" data-call="' + x.n + '">📞 Ligar</button>' +
+            '<button type="button" class="t-act t-act--wa" data-wa="' + x.n + '">WhatsApp</button>' +
+          '</div>' +
+        '</div>';
+    });
+    html +=
+      '<div class="t-note">Todas com filtro de atendimento em emergência ou 24h. ' +
+      'Se nenhuma puder ir até você agora, eu chamo um guincho.</div>';
+    card.innerHTML = html;
+    return addNode(card);
+  }
+
+  /* ---------- roteiro ---------- */
+  function play() {
+    var id = ++run;
+    conv.innerHTML = '';
+    emergencyOff();
+    field.value = 'meu carro parou no meio da rua';
+
+    return AJ.wait(760)
+      .then(function () { return ck(id); })
+      .then(function () {
+        field.value = '';
+        return addUser('meu carro parou no meio da rua');
+      })
+      .then(function () { return ck(id); }).then(function () { return AJ.wait(320); })
+      .then(function () { return ck(id); })
+      .then(emergencyOn)
+      .then(function () { return ck(id); })
+      .then(function () { return addAI('Entendi. Estou em modo emergência com você. Duas perguntas, rápido.', { pause: 420 }); })
+      .then(function () { return ck(id); }).then(function () { return AJ.wait(260); })
+      .then(function () { return ck(id); })
+      .then(function () { return addAI('Você está em segurança? Conseguiu parar fora da pista?', { pause: 380, strong: true }); })
+      .then(function () { return ck(id); })
+      .then(function () {
+        return choices(id, [
+          { label: 'Estou seguro',  value: 'seguro' },
+          { label: 'Estou na pista', value: 'pista', style: 'alert' }
+        ]);
+      })
+      .then(function (v) { return ck(id).then(function () { return v; }); })
+      .then(function (v) {
+        if (v === 'pista') return branchPista(id);
+        return addAI('Bom. Deixa o pisca-alerta ligado e fica longe da pista.', { pause: 340 });
+      })
+      .then(function () { return ck(id); })
+      .then(safetyCard)
+      .then(function () { return ck(id); }).then(function () { return AJ.wait(240); })
+      .then(function () { return ck(id); })
+      .then(function () { return addAI('O carro liga mas não anda, ou não liga de jeito nenhum?', { pause: 380, strong: true }); })
+      .then(function () { return ck(id); })
+      .then(function () {
+        return choices(id, [
+          { label: 'Liga mas não anda', value: 'liga' },
+          { label: 'Não liga',          value: 'naoliga' }
+        ]);
+      })
+      .then(function (v) { return ck(id).then(function () { return v; }); })
+      .then(function (v) {
+        if (v === 'naoliga') return branchGuincho(id);
+        return branchOficina(id);
+      })
+      .catch(function () { /* roteiro cancelado por replay */ });
+  }
+
+  /* Ramo: usuário parou na pista — orientação em uma frase, e só então segue. */
+  function branchPista(id) {
+    return addAI('Liga o pisca-alerta agora, sai pelo lado do passageiro e fica atrás da barreira, longe da pista.', { pause: 300, strong: true })
+      .then(function () { return ck(id); })
+      .then(function () {
+        return choices(id, [
+          { label: 'Pronto, estou atrás da barreira', value: 'ok', style: 'go' }
+        ]);
+      })
+      .then(function () { return ck(id); })
+      .then(function () { return addAI('Ótimo. Agora sim, seguimos.', { pause: 300 }); });
+  }
+
+  function branchGuincho(id) {
+    return addAI('Então ele não sai daí sozinho. Guincho é o caminho — esses estão perto de você agora.', { pause: 380 })
+      .then(function () { return ck(id); })
+      .then(guinchoCard)
+      .then(function () { return ck(id); })
+      .then(function () { return addAI('Fica atrás da barreira até o guincho chegar. Qualquer coisa, me chama aqui.', { pause: 420 }); });
+  }
+
+  function branchOficina(id) {
+    return addAI('Se liga mas não anda, tem chance de resolver no local ou com reboque curto. Essas atendem agora.', { pause: 380 })
+      .then(function () { return ck(id); })
+      .then(oficinaCard)
+      .then(function () { return ck(id); })
+      .then(function () { return addAI('Enquanto isso, fica longe do carro. Não precisa abrir o capô nem olhar nada por baixo.', { pause: 420 }); });
+  }
+
+  /* ---------- interações avulsas ---------- */
+  conv.addEventListener('click', function (e) {
+    var call = e.target.closest('[data-call]');
+    if (call) {
+      call.classList.add('is-done');
+      call.textContent = '📞 Chamando…';
+      var nome = call.getAttribute('data-call');
+      setTimeout(function () {
+        call.textContent = '📞 Ligação em curso';
+        addAI('Falando com ' + nome + '. Passa o endereço que está no card lá em cima.', { pause: 300 });
+      }, 900);
+      return;
+    }
+    var wa = e.target.closest('[data-wa]');
+    if (wa) {
+      wa.classList.add('is-done');
+      wa.textContent = 'Abrindo WhatsApp…';
+      setTimeout(function () { wa.textContent = 'Mensagem enviada'; }, 1000);
+    }
+  });
+
+  shareBt.addEventListener('click', function () {
+    if (shareBt.classList.contains('is-done')) return;
+    shareBt.classList.add('is-done');
+    shareTx.textContent = '✓ Localização compartilhada';
+    addAI('Localização enviada. Quem você acionar já recebe o ponto exato.', { pause: 260 });
+  });
+
+  document.getElementById('replay').addEventListener('click', play);
+
+  function sendField() {
+    var v = field.value.trim();
+    if (!v) { field.focus(); return; }
+    field.value = '';
+    addUser(v.replace(/[<>]/g, ''));
+  }
+  document.getElementById('send').addEventListener('click', sendField);
+  field.addEventListener('keydown', function (e) { if (e.key === 'Enter') sendField(); });
+
+  play();
+})();
+</script>
+</body></html>

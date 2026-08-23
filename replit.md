@@ -1,6 +1,6 @@
-# [Project name]
+# Auto Justo
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+App mobile AI native que resolve a desconfiança entre motoristas e oficinas mecânicas: o cliente descreve o problema em linguagem leiga, a IA levanta a hipótese, estima o custo com peça e mão de obra separadas, recomenda oficina verificada e acompanha até o pós-serviço.
 
 ## Run & Operate
 
@@ -22,11 +22,18 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `docs/` — fonte da verdade do produto. `autojusto_solucao_ai_native.md` (funcionalidades e jornada), `compilacao_pitch.md` (problema, público, mercado), `autojusto_prompt0_atualizado.md` (direção visual).
+- `prototipo/` — protótipo navegável em HTML/CSS/JS puro, sem dependência externa. `index.html` é o índice das 9 telas (T-00 a T-08); `tokens.css` tem a paleta e os componentes; `aj.js` tem as microinterações e a navegação entre telas.
+- `prototipo/autojusto-all-in-one.html` — as 9 telas num arquivo único autocontido, pra abrir sem servidor ou mandar por e-mail. Gerado por `prototipo/build-all-in-one.py`; regenere depois de mexer em qualquer tela.
+- Ainda não implementado em código de produção: `lib/` e `artifacts/` seguem o scaffold do workspace.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- **Paleta vem do logo, não o contrário.** `docs/brand-logo.jpeg` é a fonte da verdade: `#052577` navy, `#0136AB` azul de ação, `#084DB1` hover, `#F8C613` amarelo. Estão em `prototipo/tokens.css` e, em HSL, em `artifacts/mockup-sandbox/src/index.css`. Mudou a marca, muda esses dois arquivos.
+- **Azul domina, amarelo é acento pontual.** Mesma proporção do logo — quadrado azul, carro e polegar amarelos. Amarelo só em chip de contexto, badge e faixa de card; nunca fundo grande.
+- **Verde `#10B981` é semântico, não é cor de marca.** Só sucesso, check e confirmação. Por isso o alerta virou laranja `#E07A00` em vez do âmbar `#F59E0B` original: âmbar brigava com o amarelo da marca.
+- **O wordmark é SVG, não texto.** "Auto Justo" é Canva Sans Bold Italic — proprietária da Canva, sem licença de webfont e sem arquivo distribuível. A assinatura é um vetor traçado do logo (`prototipo/assets/wordmark.svg`), aplicado por image replacement: o texto continua no DOM pro leitor de tela.
+- **O protótipo não tem dependência externa de propósito.** Nada de Google Fonts nem CDN — o all-in-one precisa abrir offline, por e-mail, sem servidor. Logo e wordmark entram como data URI no `tokens.css`, que é o único CSS que o build inlineia.
 
 ## Product
 
@@ -38,7 +45,10 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Mexeu em qualquer tela `T0*.html`, no `tokens.css` ou no `aj.js`? Rode `python3 build-all-in-one.py` de dentro de `prototipo/`. O `autojusto-all-in-one.html` é gerado — editar ele à mão é jogar trabalho fora.
+- Logo e wordmark ficam embutidos em base64 dentro do `tokens.css`, que o build inlineia uma vez por tela. Trocar por um asset maior multiplica por 9 no arquivo final (hoje 577 KB).
+- Para o wordmark, use sempre `prototipo/assets/wordmark.svg`. Não recrie "Auto Justo" com fonte itálica qualquer — não bate com o logo. No `mockup-sandbox`, `.font-display` (Plus Jakarta Sans) serve para títulos, nunca para o wordmark.
+- O protótipo usa Inter; o `mockup-sandbox` carrega o bundle de fontes do Replit. São dois sistemas separados de propósito — não tente unificar sem resolver o problema do offline.
 
 ## Pointers
 

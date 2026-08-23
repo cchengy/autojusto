@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auto Justo — T-06 Agendamento</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* ---- Locais da T-06: calendário, chips, toggle, contato, sheet ---- */
+
+  .t6-caret { color: var(--aj-text-2); font-size: var(--aj-fs-sm); }
+
+  /* Faixa de 7 dias — interface tradicional de verdade */
+  .t6-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  .t6-day {
+    appearance: none;
+    border: 1px solid transparent;
+    background: transparent;
+    font-family: inherit;
+    padding: var(--aj-2) 0 var(--aj-1);
+    border-radius: var(--aj-3);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    transition: background var(--aj-dur) var(--aj-ease),
+                color var(--aj-dur) var(--aj-ease),
+                border-color var(--aj-dur) var(--aj-ease);
+  }
+  .t6-day__wd {
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--aj-text-2);
+  }
+  .t6-day__n { font-size: 15px; font-weight: 700; color: var(--aj-ai-text); }
+  .t6-day__dot {
+    width: 4px; height: 4px; border-radius: var(--aj-r-pill);
+    background: var(--aj-accent); opacity: 0;
+  }
+  .t6-day--sug .t6-day__dot { opacity: 1; }
+  .t6-day:not(.t6-day--off):hover { background: var(--aj-tint); }
+  .t6-day--off { cursor: not-allowed; }
+  .t6-day--off .t6-day__wd,
+  .t6-day--off .t6-day__n { color: #CBD5E1; font-weight: 500; }
+  .t6-day--on { background: var(--aj-accent); border-color: var(--aj-accent); }
+  .t6-day--on .t6-day__wd { color: rgba(255,255,255,.72); }
+  .t6-day--on .t6-day__n { color: #fff; }
+  .t6-day--on .t6-day__dot { background: #fff; }
+
+  .t6-weekhint {
+    margin-top: var(--aj-3);
+    font-size: var(--aj-fs-sm);
+    color: var(--aj-text-2);
+  }
+
+  /* Grade de horários */
+  .t6-slots {
+    margin-top: var(--aj-4);
+    border-top: 1px solid var(--aj-border);
+    padding-top: var(--aj-4);
+  }
+  .t6-slots[hidden] { display: none; }
+  .t6-slots__label {
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--aj-text-2);
+    font-weight: 600;
+    margin-bottom: var(--aj-3);
+  }
+  .t6-chips { display: flex; flex-wrap: wrap; gap: var(--aj-2); }
+  .t6-chip {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 14px;
+    border-radius: var(--aj-r-pill);
+    border: 1px solid var(--aj-border);
+    background: var(--aj-surface);
+    color: var(--aj-ai-text);
+    cursor: pointer;
+    transition: background var(--aj-dur) var(--aj-ease),
+                color var(--aj-dur) var(--aj-ease),
+                border-color var(--aj-dur) var(--aj-ease);
+  }
+  .t6-chip:hover:not(.t6-chip--off) { background: var(--aj-tint); }
+  .t6-chip--sug { border-color: rgba(5,37,119,.45); }
+  .t6-chip--off {
+    color: #CBD5E1;
+    border-style: dashed;
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+  .t6-chip--on {
+    background: var(--aj-accent);
+    border-color: var(--aj-accent);
+    color: #fff;
+  }
+  .t6-chip__tag {
+    display: block;
+    font-size: 9px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--aj-accent);
+    margin-top: 1px;
+  }
+  .t6-chip--on .t6-chip__tag { color: rgba(255,255,255,.75); }
+
+  /* Botão desabilitado/opaco */
+  .aj-btn[disabled] {
+    opacity: .38;
+    cursor: not-allowed;
+  }
+  .t6-btn-gap { margin-top: var(--aj-4); }
+
+  /* Toggle do caminho alternativo */
+  .t6-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--aj-3);
+    padding: var(--aj-3) var(--aj-4);
+    background: rgba(255,255,255,.72);
+    border: 1px dashed var(--aj-border);
+    border-radius: var(--aj-r-card);
+    cursor: pointer;
+    align-self: stretch;
+  }
+  .t6-toggle__txt { font-size: var(--aj-fs-sm); color: var(--aj-ai-text); flex: 1 1 auto; }
+  .t6-toggle__sw {
+    width: 42px; height: 24px; flex: 0 0 42px;
+    border-radius: var(--aj-r-pill);
+    background: var(--aj-border);
+    position: relative;
+    transition: background var(--aj-dur) var(--aj-ease);
+  }
+  .t6-toggle__sw::after {
+    content: "";
+    position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    border-radius: var(--aj-r-pill);
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.24);
+    transition: transform var(--aj-dur) var(--aj-spring);
+  }
+  .t6-toggle.is-on .t6-toggle__sw { background: var(--aj-accent); }
+  .t6-toggle.is-on .t6-toggle__sw::after { transform: translateX(18px); }
+
+  /* Card de contato direto (caminho alternativo) */
+  .t6-contact-note {
+    font-size: var(--aj-fs-sm);
+    color: var(--aj-text-2);
+    line-height: var(--aj-lh-body);
+    margin-top: var(--aj-3);
+  }
+  .t6-contact-btns { display: flex; gap: var(--aj-2); margin-top: var(--aj-4); }
+  .t6-contact-btns .aj-btn { padding: var(--aj-3); font-size: 15px; }
+  .t6-wa { background: #128C7E; }
+  .t6-registered {
+    display: none;
+    align-items: center;
+    gap: var(--aj-2);
+    margin-top: var(--aj-4);
+    padding-top: var(--aj-3);
+    border-top: 1px solid var(--aj-border);
+    font-size: var(--aj-fs-sm);
+    color: #047857;
+    font-weight: 600;
+  }
+  .t6-registered.is-on { display: flex; }
+
+  /* Resumo */
+  .t6-sum-total {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-top: var(--aj-3);
+    padding-top: var(--aj-3);
+    border-top: 1px solid var(--aj-border);
+  }
+  .t6-sum-total__k { font-size: var(--aj-fs-sm); color: var(--aj-text-2); }
+  .t6-sum-total__v { font-size: var(--aj-fs-xl); font-weight: 700; }
+
+  /* Bottom sheet — conteúdo */
+  .t6-sheet-oficina {
+    text-align: center;
+    font-size: var(--aj-fs-lg);
+    font-weight: 600;
+    margin-top: var(--aj-3);
+  }
+  .aj-sheet__value { margin-bottom: var(--aj-3); line-height: 1.15; }
+  .aj-sheet__value small {
+    display: block;
+    font-size: var(--aj-fs-sm);
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--aj-text-2);
+    margin-top: var(--aj-2);
+  }
+  .t6-sheet-ai {
+    text-align: center;
+    font-size: var(--aj-fs-body);
+    color: var(--aj-ai-text);
+    line-height: var(--aj-lh-body);
+    margin: 0 0 var(--aj-5);
+  }
+  .t6-sheet-btns { display: flex; flex-direction: column; gap: var(--aj-2); }
+
+  /* Rodapé de fluxo + replay */
+  .t6-next {
+    align-self: flex-start;
+    font-size: var(--aj-fs-sm);
+    color: var(--aj-text-2);
+    padding-top: var(--aj-2);
+  }
+  .t6-replay {
+    position: absolute;
+    right: var(--aj-4);
+    bottom: 88px;
+    z-index: 4;
+    border: 1px solid var(--aj-border);
+    background: rgba(255,255,255,.94);
+    color: var(--aj-text-2);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: var(--aj-r-pill);
+    box-shadow: var(--aj-shadow-card);
+    cursor: pointer;
+  }
+  .t6-replay:hover { color: var(--aj-accent); }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="aj-device" id="device">
+
+  <div class="aj-statusbar">
+    <span>9:41</span>
+    <span>▮▮▮ ⌁ 84%</span>
+  </div>
+
+  <header class="aj-header">
+    <div class="aj-header__avatar">AJ</div>
+    <div class="aj-header__name">Auto Justo</div>
+    <div class="aj-header__ctx">HB20 2018</div>
+  </header>
+
+  <main class="aj-scroll" id="scroll">
+
+    <div class="aj-msg-user aj-enter" id="m-user">Fechado, quero a Oficina Silva.</div>
+
+    <p class="aj-msg-ai" id="m-ai1" data-aj-type="Ótima escolha. A Oficina Silva tem horário na quinta às 14h e na sexta às 9h. Escolhe abaixo o dia e a hora que te servem melhor."></p>
+
+    <!-- CAMINHO ALTERNATIVO: toggle -->
+    <div class="t6-toggle aj-enter" id="toggle" role="switch" aria-checked="false" tabindex="0">
+      <span class="t6-toggle__txt">Esta oficina não agenda pelo app</span>
+      <span class="t6-toggle__sw" aria-hidden="true"></span>
+    </div>
+
+    <!-- CARD DE CALENDÁRIO -->
+    <section class="aj-card aj-enter" id="card-cal">
+      <div class="aj-card__caps">Escolha dia e horário</div>
+      <div class="t6-week" id="week"></div>
+      <div class="t6-weekhint" id="weekhint">25 e 30 sem vaga. Os dias com • são os que a IA sugeriu.</div>
+
+      <div class="t6-slots" id="slots" hidden>
+        <div class="t6-slots__label" id="slots-label">Horários</div>
+        <div class="t6-chips" id="chips"></div>
+      </div>
+
+      <button class="aj-btn t6-btn-gap" id="btn-continuar" disabled>Confirmar horário</button>
+    </section>
+
+    <!-- CAMINHO ALTERNATIVO: contato direto -->
+    <section class="aj-card aj-enter is-in" id="card-contato" hidden>
+      <div class="aj-card__caps">Contato direto</div>
+      <div class="aj-row">
+        <div class="aj-row__thumb">🔧</div>
+        <div class="aj-row__main">
+          <div class="aj-row__title">Oficina Silva</div>
+          <div class="aj-row__sub">Vila Mariana · 4,8 ★ · (11) 98812-4407</div>
+        </div>
+      </div>
+      <p class="t6-contact-note">Esta oficina ainda não habilitou agendamento pelo app. Combine o horário direto com eles — leva 1 minuto.</p>
+      <div class="t6-contact-btns">
+        <button class="aj-btn t6-wa" id="btn-wa">WhatsApp</button>
+        <button class="aj-btn aj-btn--ghost" id="btn-ligar">Ligar</button>
+      </div>
+      <p class="t6-contact-note">A escolha da oficina fica registrada no histórico do seu carro mesmo assim — o serviço, o valor e a avaliação depois.</p>
+      <div class="t6-registered" id="registered">
+        <span class="aj-check__mark">✓</span>
+        <span>Escolha registrada no histórico do HB20</span>
+      </div>
+    </section>
+
+    <!-- CARD DE RESUMO -->
+    <section class="aj-card aj-enter" id="card-resumo" hidden>
+      <div class="aj-card__caps">Resumo do agendamento</div>
+      <div class="aj-row aj-row--on">
+        <div class="aj-row__thumb">🔧</div>
+        <div class="aj-row__main">
+          <div class="aj-row__title">Oficina Silva</div>
+          <div class="aj-row__sub">Vila Mariana · 4,8 ★</div>
+        </div>
+        <span class="aj-badge aj-badge--respeito">♀ selo</span>
+      </div>
+      <div class="aj-row">
+        <div class="aj-row__thumb">⚙️</div>
+        <div class="aj-row__main">
+          <div class="aj-row__title">Troca de junta homocinética</div>
+          <div class="aj-row__sub">Peça + mão de obra · 3h estimadas</div>
+        </div>
+      </div>
+      <div class="aj-row">
+        <div class="aj-row__thumb">📅</div>
+        <div class="aj-row__main">
+          <div class="aj-row__title" id="resumo-data">—</div>
+          <div class="aj-row__sub">Deixar o carro no balcão da recepção</div>
+        </div>
+      </div>
+      <div class="t6-sum-total">
+        <span class="t6-sum-total__k">Valor orçado</span>
+        <span class="t6-sum-total__v">R$ 380</span>
+      </div>
+      <button class="aj-btn t6-btn-gap" id="btn-agendar">Agendar</button>
+    </section>
+
+    <p class="aj-msg-ai" id="m-ai2" hidden></p>
+
+    <div class="t6-next" id="next" hidden>Continua em T-07 Histórico →</div>
+  </main>
+
+  <div class="aj-input">
+    <input class="aj-input__field" placeholder="Mensagem" aria-label="Mensagem">
+    <button class="aj-input__send" aria-label="Enviar">↑</button>
+  </div>
+
+  <button class="t6-replay" id="replay">↻ replay</button>
+
+  <!-- BOTTOM SHEET (dentro do device) -->
+  <div class="aj-sheet-scrim" id="scrim"></div>
+  <div class="aj-sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Agendamento confirmado">
+    <div class="aj-sheet__handle"></div>
+    <div class="aj-sheet__caps">Agendamento confirmado</div>
+    <div class="t6-sheet-oficina">Oficina Silva</div>
+    <div class="aj-sheet__value" id="sheet-quando">
+      qui 27 · 14:00
+      <small>Troca de junta homocinética · R$ 380</small>
+    </div>
+    <div class="aj-seal">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M13 25 l8 8 l16 -17"/></svg>
+    </div>
+    <p class="t6-sheet-ai">Vou te avisar depois pra saber como foi</p>
+    <div class="t6-sheet-btns">
+      <button class="aj-btn" id="btn-cal">Adicionar no calendário</button>
+      <button class="aj-btn aj-btn--ghost" id="btn-fechar">Fechar</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="aj.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var DIAS = [
+    { wd: 'seg', full: 'Segunda', n: 24, slots: [
+      { t: '08:00' }, { t: '09:00', off: true }, { t: '10:30' }, { t: '15:30' } ] },
+    { wd: 'ter', full: 'Terça',   n: 25, slots: [] },
+    { wd: 'qua', full: 'Quarta',  n: 26, slots: [
+      { t: '08:00', off: true }, { t: '14:00' }, { t: '15:30' } ] },
+    { wd: 'qui', full: 'Quinta',  n: 27, sug: true, slots: [
+      { t: '08:00' }, { t: '09:00' }, { t: '10:30', off: true }, { t: '14:00', sug: true }, { t: '15:30' } ] },
+    { wd: 'sex', full: 'Sexta',   n: 28, sug: true, slots: [
+      { t: '09:00', sug: true }, { t: '10:30' }, { t: '14:00', off: true } ] },
+    { wd: 'sáb', full: 'Sábado',  n: 29, slots: [ { t: '08:00' }, { t: '09:00' } ] },
+    { wd: 'dom', full: 'Domingo', n: 30, slots: [] }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var scroll = $('scroll'), sheet = $('sheet'), scrim = $('scrim');
+  var week = $('week'), chips = $('chips'), slots = $('slots'), slotsLabel = $('slots-label');
+  var btnContinuar = $('btn-continuar'), cardResumo = $('card-resumo'), resumoData = $('resumo-data');
+  var cardCal = $('card-cal'), cardContato = $('card-contato'), toggle = $('toggle');
+  var mAi2 = $('m-ai2'), next = $('next');
+
+  var selDia = null, selHora = null;
+
+  /* ---------- calendário ---------- */
+  function pintaSemana() {
+    week.innerHTML = '';
+    DIAS.forEach(function (d, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 't6-day' + (d.slots.length ? '' : ' t6-day--off') + (d.sug ? ' t6-day--sug' : '');
+      if (!d.slots.length) b.disabled = true;
+      b.setAttribute('aria-label', d.full + ' ' + d.n + (d.slots.length ? '' : ' — sem vaga'));
+      b.innerHTML = '<span class="t6-day__wd">' + d.wd + '</span>' +
+                    '<span class="t6-day__n">' + d.n + '</span>' +
+                    '<span class="t6-day__dot"></span>';
+      b.addEventListener('click', function () { escolheDia(i); });
+      week.appendChild(b);
+    });
+  }
+
+  function escolheDia(i) {
+    selDia = i; selHora = null;
+    Array.prototype.forEach.call(week.children, function (el, j) {
+      el.classList.toggle('t6-day--on', j === i);
+    });
+    var d = DIAS[i];
+    slotsLabel.textContent = d.full + ', ' + d.n + ' de agosto';
+    chips.innerHTML = '';
+    d.slots.forEach(function (s) {
+      var c = document.createElement('button');
+      c.type = 'button';
+      c.className = 't6-chip' + (s.off ? ' t6-chip--off' : '') + (s.sug && !s.off ? ' t6-chip--sug' : '');
+      if (s.off) c.disabled = true;
+      c.innerHTML = s.t + (s.sug && !s.off ? '<span class="t6-chip__tag">sugerido</span>' : '');
+      c.addEventListener('click', function () { escolheHora(s.t, c); });
+      chips.appendChild(c);
+    });
+    slots.hidden = false;
+    slots.classList.remove('is-in');
+    slots.classList.add('aj-enter');
+    requestAnimationFrame(function () { slots.classList.add('is-in'); });
+    atualizaBotao();
+    esconderResumo();
+    AJ.scrollDown(scroll);
+  }
+
+  function escolheHora(t, el) {
+    selHora = t;
+    Array.prototype.forEach.call(chips.children, function (c) { c.classList.remove('t6-chip--on'); });
+    el.classList.add('t6-chip--on');
+    atualizaBotao();
+    esconderResumo();
+  }
+
+  function atualizaBotao() {
+    btnContinuar.disabled = !(selDia !== null && selHora);
+  }
+
+  function textoQuando() {
+    var d = DIAS[selDia];
+    return d.full + ', ' + d.n + ' de agosto · ' + selHora;
+  }
+
+  function esconderResumo() {
+    cardResumo.hidden = true;
+    cardResumo.classList.remove('is-in');
+  }
+
+  btnContinuar.addEventListener('click', function () {
+    if (btnContinuar.disabled) return;
+    resumoData.textContent = textoQuando();
+    cardResumo.hidden = false;
+    requestAnimationFrame(function () {
+      cardResumo.classList.add('is-in');
+      AJ.scrollDown(scroll);
+    });
+  });
+
+  /* ---------- clímax: bottom sheet ---------- */
+  $('btn-agendar').addEventListener('click', function () {
+    var d = DIAS[selDia];
+    $('sheet-quando').innerHTML = d.wd + ' ' + d.n + ' · ' + selHora +
+      '<small>Troca de junta homocinética · R$ 380</small>';
+    AJ.openSheet(sheet);
+  });
+
+  function fechar() {
+    AJ.closeSheet(sheet);
+    var seal = sheet.querySelector('.aj-seal');
+    setTimeout(function () { if (seal) seal.classList.remove('is-on'); }, 400);
+    depoisDoSheet();
+  }
+  $('btn-fechar').addEventListener('click', fechar);
+  scrim.addEventListener('click', fechar);
+  $('btn-cal').addEventListener('click', function () {
+    $('btn-cal').textContent = '✓ Adicionado ao calendário';
+    $('btn-cal').classList.add('aj-btn--success');
+  });
+
+  function depoisDoSheet() {
+    if (!mAi2.hidden) return;
+    mAi2.hidden = false;
+    AJ.typeText(mAi2, 'Salvei no histórico do seu HB20: Oficina Silva, ' + textoQuando() +
+      ', troca de junta homocinética, R$ 380. Te lembro na véspera e depois eu volto pra saber como foi.')
+      .then(function () {
+        next.hidden = false;
+        AJ.scrollDown(scroll);
+      });
+    AJ.scrollDown(scroll);
+  }
+
+  /* ---------- caminho alternativo ---------- */
+  toggle.addEventListener('click', alterna);
+  toggle.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); alterna(); }
+  });
+
+  function alterna() {
+    var on = !toggle.classList.contains('is-on');
+    toggle.classList.toggle('is-on', on);
+    toggle.setAttribute('aria-checked', on ? 'true' : 'false');
+    cardCal.hidden = on;
+    cardContato.hidden = !on;
+    if (on) {
+      selDia = null; selHora = null;
+      slots.hidden = true;
+      atualizaBotao();
+      Array.prototype.forEach.call(week.children, function (el) { el.classList.remove('t6-day--on'); });
+      esconderResumo();
+    } else {
+      $('registered').classList.remove('is-on');
+    }
+    AJ.scrollDown(scroll);
+  }
+
+  function registra() {
+    $('registered').classList.add('is-on');
+    AJ.scrollDown(scroll);
+  }
+  $('btn-wa').addEventListener('click', registra);
+  $('btn-ligar').addEventListener('click', registra);
+
+  /* ---------- roteiro de entrada ---------- */
+  function play() {
+    AJ.closeSheet(sheet);
+    var seal = sheet.querySelector('.aj-seal');
+    if (seal) seal.classList.remove('is-on');
+
+    selDia = null; selHora = null;
+    slots.hidden = true;
+    esconderResumo();
+    mAi2.hidden = true; mAi2.textContent = '';
+    next.hidden = true;
+    $('btn-cal').textContent = 'Adicionar no calendário';
+    $('btn-cal').classList.remove('aj-btn--success');
+    $('registered').classList.remove('is-on');
+    toggle.classList.remove('is-on');
+    toggle.setAttribute('aria-checked', 'false');
+    cardCal.hidden = false;
+    cardContato.hidden = true;
+    pintaSemana();
+    atualizaBotao();
+
+    ['m-user', 'm-ai1', 'toggle', 'card-cal'].forEach(function (id) {
+      $(id).classList.remove('is-in');
+      $(id).classList.add('aj-enter');
+    });
+    $('m-ai1').textContent = '';
+    scroll.scrollTop = 0;
+
+    AJ.reveal([$('m-user')], 0)
+      .then(function () { return AJ.wait(420); })
+      .then(function () {
+        $('m-ai1').classList.add('is-in');
+        return AJ.typeText($('m-ai1'));
+      })
+      .then(function () { return AJ.wait(240); })
+      .then(function () { return AJ.reveal([$('toggle'), $('card-cal')], 160); })
+      .then(function () { AJ.scrollDown(scroll); });
+  }
+
+  $('replay').addEventListener('click', play);
+  play();
+})();
+</script>
+</body>
+</html>

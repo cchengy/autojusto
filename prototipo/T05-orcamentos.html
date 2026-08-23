@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auto Justo — T-05 Orçamentos</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* ---- locais da T-05 ---- */
+
+  /* status de resposta das oficinas */
+  .t5-dot {
+    width: 8px; height: 8px; flex: 0 0 8px;
+    border-radius: var(--aj-r-pill);
+    background: var(--aj-success);
+  }
+  .t5-dot--wait { background: var(--aj-warn); animation: t5-pulse 1.6s ease-in-out infinite; }
+  @keyframes t5-pulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+  .t5-status {
+    display: flex; align-items: center; gap: var(--aj-2);
+    padding: var(--aj-2) var(--aj-3);
+    font-size: var(--aj-fs-sm);
+  }
+  .t5-status__name { font-size: var(--aj-fs-body); font-weight: 500; color: var(--aj-ai-text); }
+  .t5-status__tag  { margin-left: auto; font-size: var(--aj-fs-sm); color: var(--aj-text-2); }
+  .t5-status__tag--ok { color: #047857; }
+
+  .t5-hint {
+    font-size: var(--aj-fs-sm);
+    color: var(--aj-text-2);
+    line-height: 1.5;
+    margin-top: var(--aj-3);
+    padding-top: var(--aj-3);
+    border-top: 1px solid var(--aj-border);
+  }
+
+  /* nota cinza obrigatória */
+  .t5-note {
+    align-self: stretch;
+    font-size: var(--aj-fs-sm);
+    line-height: 1.5;
+    color: var(--aj-text-2);
+    padding: 0 var(--aj-1);
+  }
+
+  /* ---- faixa de referência: 3 preços contra a estimativa ---- */
+  .t5-scale { margin-top: var(--aj-5); padding-top: var(--aj-4); border-top: 1px solid var(--aj-border); }
+  .t5-scale__caps {
+    font-size: var(--aj-fs-caps); letter-spacing: .12em; text-transform: uppercase;
+    color: var(--aj-text-2); font-weight: 600;
+  }
+  .t5-scale__legend {
+    font-size: var(--aj-fs-sm); color: var(--aj-ai-text);
+    font-weight: 600; margin-top: 2px;
+  }
+  .t5-track {
+    position: relative;
+    height: 6px;
+    border-radius: var(--aj-r-pill);
+    background: var(--aj-border);
+    margin: 34px 0 var(--aj-2);
+  }
+  .t5-band {
+    position: absolute; top: 0; bottom: 0;
+    left: 6.4%; width: 0;
+    border-radius: var(--aj-r-pill);
+    background: var(--aj-success);
+    transition: width 620ms var(--aj-ease);
+  }
+  .t5-scale.is-on .t5-band { width: 16.3%; }
+
+  .t5-pin {
+    position: absolute; top: 50%;
+    transform: translate(-50%, -50%) scale(.4);
+    opacity: 0;
+    transition: opacity 300ms var(--aj-ease), transform 420ms var(--aj-spring);
+  }
+  .t5-scale.is-on .t5-pin { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .t5-scale.is-on .t5-pin--b { transition-delay: 120ms; }
+  .t5-scale.is-on .t5-pin--c { transition-delay: 240ms; }
+
+  .t5-pin__dot {
+    width: 18px; height: 18px;
+    border-radius: var(--aj-r-pill);
+    background: var(--aj-accent);
+    border: 3px solid var(--aj-surface);
+    box-shadow: 0 1px 4px rgba(15,23,42,.22);
+  }
+  .t5-pin--c .t5-pin__dot { background: var(--aj-warn); }
+  .t5-pin__lbl {
+    position: absolute; left: 50%; bottom: 18px;
+    transform: translateX(-50%);
+    font-size: 10px; font-weight: 700; letter-spacing: .04em;
+    color: var(--aj-text-2);
+    white-space: nowrap;
+  }
+  .t5-pin--c .t5-pin__lbl { color: #9A4A00; }
+  .t5-scale__ends {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: var(--aj-text-2); letter-spacing: .04em;
+  }
+
+  /* linha de orçamento selecionável */
+  .t5-pick { width: 100%; border: 0; background: transparent; font-family: inherit; text-align: left; cursor: pointer; }
+  .t5-pick .aj-row { width: 100%; transition: background 200ms var(--aj-ease); }
+  .t5-check {
+    width: 20px; height: 20px; flex: 0 0 20px;
+    border-radius: var(--aj-r-pill);
+    border: 1.5px solid var(--aj-border);
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700; color: transparent;
+  }
+  .aj-row--on .t5-check { background: var(--aj-accent); border-color: var(--aj-accent); color: #fff; }
+  .t5-price { font-size: var(--aj-fs-body); font-weight: 700; }
+  .t5-price--warn { color: #9A4A00; }
+  .t5-row__badge { margin-top: var(--aj-1); }
+
+  /* explicador expansível */
+  .t5-exp { align-self: stretch; }
+  .t5-exp summary {
+    list-style: none; cursor: pointer;
+    display: flex; align-items: center; gap: var(--aj-2);
+    font-size: var(--aj-fs-caps); letter-spacing: .12em; text-transform: uppercase;
+    font-weight: 600; color: var(--aj-text-2);
+  }
+  .t5-exp summary::-webkit-details-marker { display: none; }
+  .t5-exp summary::after {
+    content: "+"; margin-left: auto;
+    font-size: 16px; line-height: 1; letter-spacing: 0;
+    color: var(--aj-text-2);
+  }
+  .t5-exp[open] summary::after { content: "–"; }
+  .t5-exp__body {
+    font-size: var(--aj-fs-sm); line-height: var(--aj-lh-body);
+    color: var(--aj-ai-text); margin-top: var(--aj-3);
+  }
+  .t5-exp__body p { margin: 0 0 var(--aj-2); }
+  .t5-exp__body p:last-child { margin-bottom: 0; }
+
+  /* preview de mensagem do WhatsApp */
+  .t5-wa {
+    background: var(--aj-tint);
+    border-radius: var(--aj-3);
+    padding: var(--aj-4);
+    font-size: var(--aj-fs-sm);
+    line-height: var(--aj-lh-body);
+    color: var(--aj-ai-text);
+    margin-bottom: var(--aj-4);
+  }
+  .t5-wa strong { font-weight: 600; }
+  .t5-wa__link { color: var(--aj-accent); text-decoration: underline; }
+
+  /* card de ação final */
+  .t5-final__label { font-size: var(--aj-fs-sm); color: var(--aj-text-2); }
+  .t5-final__name  { font-size: var(--aj-fs-lg); font-weight: 700; margin-top: 2px; }
+  .t5-final__value { font-size: var(--aj-fs-xl); font-weight: 700; }
+  .t5-final__top {
+    display: flex; align-items: flex-end; gap: var(--aj-3);
+    margin-bottom: var(--aj-4);
+  }
+  .t5-final__top div:last-child { margin-left: auto; text-align: right; }
+
+  /* rodapé de fluxo */
+  .t5-foot {
+    align-self: stretch;
+    display: flex; align-items: center; gap: var(--aj-3);
+    font-size: var(--aj-fs-sm); color: var(--aj-text-2);
+    padding: var(--aj-2) var(--aj-1) 0;
+  }
+  .t5-replay {
+    margin-left: auto;
+    border: 1px solid var(--aj-border);
+    background: var(--aj-surface);
+    color: var(--aj-text-2);
+    border-radius: var(--aj-r-pill);
+    padding: var(--aj-1) var(--aj-3);
+    font-family: inherit; font-size: var(--aj-fs-sm);
+    cursor: pointer;
+  }
+
+  /* toast */
+  .t5-toast {
+    position: absolute; left: 50%; bottom: 96px;
+    transform: translate(-50%, 12px);
+    background: var(--aj-user-bubble);
+    color: #fff;
+    font-size: var(--aj-fs-sm);
+    padding: var(--aj-3) var(--aj-4);
+    border-radius: var(--aj-r-pill);
+    box-shadow: 0 8px 24px rgba(15,23,42,.28);
+    opacity: 0; pointer-events: none;
+    transition: opacity 240ms var(--aj-ease), transform 240ms var(--aj-ease);
+  }
+  .t5-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+  .t5-btn-row { display: flex; gap: var(--aj-2); }
+</style>
+</head>
+<body>
+
+<div class="aj-device">
+
+  <div class="aj-statusbar">
+    <span>9:41</span>
+    <span>●●●&nbsp;&nbsp;ᯤ&nbsp;&nbsp;▮</span>
+  </div>
+
+  <div class="aj-header">
+    <div class="aj-header__avatar">AJ</div>
+    <div class="aj-header__name">Auto Justo</div>
+    <div class="aj-header__ctx">HB20 2018</div>
+  </div>
+
+  <div class="aj-scroll" id="scroll">
+
+    <!-- 1. contexto + estado de espera -->
+    <div class="aj-msg-user aj-enter is-in">Mandei pras 3 oficinas. E agora?</div>
+
+    <div class="aj-msg-ai aj-enter is-in">
+      As 3 já receberam a descrição do problema. Assim que responderem, eu comparo pra você.
+    </div>
+
+    <div class="aj-card aj-enter is-in" id="cardWait">
+      <div class="aj-card__caps" id="waitCaps">Aguardando respostas</div>
+
+      <div class="t5-status">
+        <span class="t5-dot"></span>
+        <span class="t5-status__name">Oficina Silva</span>
+        <span class="t5-status__tag t5-status__tag--ok">Respondeu</span>
+      </div>
+      <div class="t5-status">
+        <span class="t5-dot"></span>
+        <span class="t5-status__name">Oficina Park</span>
+        <span class="t5-status__tag t5-status__tag--ok">Respondeu</span>
+      </div>
+      <div class="t5-status">
+        <span class="t5-dot t5-dot--wait" id="dotCentral"></span>
+        <span class="t5-status__name">Oficina Central</span>
+        <span class="t5-status__tag" id="tagCentral">Pendente</span>
+      </div>
+
+      <div class="t5-hint" id="waitHint">2 de 3 responderam. O prazo de resposta é de até 24h — te aviso assim que a última chegar.</div>
+
+      <div style="margin-top:var(--aj-4)">
+        <button class="aj-btn aj-btn--ghost" id="btnArrive">Chegou o 3º orçamento</button>
+      </div>
+    </div>
+
+    <!-- 2. IA anuncia -->
+    <div class="aj-msg-ai aj-enter" id="aiIntro" hidden
+         data-aj-type="Chegaram os 3 orçamentos. Vou te mostrar os números e explicar o que eles querem dizer.">
+    </div>
+
+    <!-- 3. card dos 3 orçamentos + faixa de referência -->
+    <div class="aj-card aj-enter" id="cardQuotes" hidden>
+      <div class="aj-card__caps">3 orçamentos</div>
+
+      <button class="t5-pick" data-shop="Oficina Silva" data-price="R$ 380" data-part="peça paralela">
+        <div class="aj-row aj-row--on">
+          <span class="t5-check">✓</span>
+          <span class="aj-row__main">
+            <span class="aj-row__title" style="display:block">Oficina Silva</span>
+            <span class="aj-row__sub" style="display:block">Peça paralela · pronto em 1 dia</span>
+          </span>
+          <span class="aj-row__right"><span class="t5-price">R$ 380</span></span>
+        </div>
+      </button>
+
+      <button class="t5-pick" data-shop="Oficina Park" data-price="R$ 520" data-part="peça original">
+        <div class="aj-row">
+          <span class="t5-check">✓</span>
+          <span class="aj-row__main">
+            <span class="aj-row__title" style="display:block">Oficina Park</span>
+            <span class="aj-row__sub" style="display:block">Peça original · pronto em 2 dias</span>
+          </span>
+          <span class="aj-row__right"><span class="t5-price">R$ 520</span></span>
+        </div>
+      </button>
+
+      <button class="t5-pick" data-shop="Oficina Central" data-price="R$ 1.200" data-part="peça original">
+        <div class="aj-row">
+          <span class="t5-check">✓</span>
+          <span class="aj-row__main">
+            <span class="aj-row__title" style="display:block">Oficina Central</span>
+            <span class="aj-row__sub" style="display:block">Peça original · pronto em 1 dia</span>
+            <span class="t5-row__badge" style="display:block">
+              <span class="aj-badge aj-badge--warn">⚠ 215% acima da média</span>
+            </span>
+          </span>
+          <span class="aj-row__right"><span class="t5-price t5-price--warn">R$ 1.200</span></span>
+        </div>
+      </button>
+
+      <!-- faixa visual: 3 preços contra a estimativa Auto Justo -->
+      <div class="t5-scale" id="scale">
+        <div class="t5-scale__caps">Referência</div>
+        <div class="t5-scale__legend">Estimativa Auto Justo: R$ 270–450</div>
+
+        <div class="t5-track">
+          <div class="t5-band"></div>
+
+          <div class="t5-pin t5-pin--a" style="left:16.4%">
+            <div class="t5-pin__lbl">SILVA 380</div>
+            <div class="t5-pin__dot"></div>
+          </div>
+          <div class="t5-pin t5-pin--b" style="left:29.1%">
+            <div class="t5-pin__lbl">PARK 520</div>
+            <div class="t5-pin__dot"></div>
+          </div>
+          <div class="t5-pin t5-pin--c" style="left:90.9%">
+            <div class="t5-pin__lbl">CENTRAL 1.200</div>
+            <div class="t5-pin__dot"></div>
+          </div>
+        </div>
+
+        <div class="t5-scale__ends">
+          <span>R$ 200</span>
+          <span>R$ 1.300</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. análise da IA -->
+    <div class="aj-msg-ai aj-enter" id="ai1" hidden
+         data-aj-type="A Oficina Central está 215% acima da média regional para esse serviço. Não quer dizer que seja golpe, mas antes de aceitar peça a justificativa por escrito: o que exatamente entra nesse valor."></div>
+
+    <div class="aj-msg-ai aj-enter" id="ai2" hidden
+         data-aj-type="Entre a Silva e a Park a diferença não é a qualidade do serviço — é a peça. A Silva usa paralela, a Park usa original."></div>
+
+    <div class="aj-msg-ai aj-enter" id="ai3" hidden
+         data-aj-type="No seu HB20, que já tem 7 anos, paralela de boa marca resolve bem. A original custa R$ 140 a mais e faz o mesmo trabalho num carro dessa idade."></div>
+
+    <details class="aj-card t5-exp aj-enter" id="cardExp" hidden>
+      <summary>O que é peça paralela?</summary>
+      <div class="t5-exp__body">
+        <p>Peça <strong>original</strong> é a que vem com o carimbo da montadora — no seu caso, a Hyundai. Peça <strong>paralela</strong> é feita por outro fabricante, muitas vezes o mesmo que produz para a montadora, e vendida com a marca própria.</p>
+        <p>Paralela não é peça pirata. Marcas conhecidas seguem a mesma especificação técnica e dão garantia. A diferença costuma ser o preço, entre 30% e 50% menor.</p>
+        <p>Regra prática: carro na garantia ou muito novo, original. Carro com mais de 5 anos, paralela de boa marca é a escolha equilibrada.</p>
+      </div>
+    </details>
+
+    <!-- 5. nota obrigatória -->
+    <div class="t5-note aj-enter" id="note" hidden>
+      Os orçamentos são estimativas. O diagnóstico pode mudar após a avaliação presencial do profissional.
+    </div>
+
+    <!-- 6. compartilhamento inteligente -->
+    <div class="aj-card aj-enter" id="cardShare" hidden>
+      <div class="aj-card__caps">Resumo para compartilhar</div>
+      <div class="t5-wa">
+        <strong>Diagnóstico:</strong> possível problema na junta homocinética.<br>
+        <strong>Estimativa Auto Justo:</strong> R$ 270–450.<br>
+        <strong>Orçamentos:</strong> Oficina Silva R$ 380 (peça paralela), Oficina Park R$ 520 (peça original).<br>
+        <span class="t5-wa__link">Link para ver os detalhes no app.</span>
+      </div>
+      <button class="aj-btn aj-btn--ghost" id="btnWa">Enviar no WhatsApp</button>
+    </div>
+
+    <!-- 7. card de ação final -->
+    <div class="aj-card aj-enter" id="cardFinal" hidden>
+      <div class="aj-card__caps">Oficina escolhida</div>
+      <div class="t5-final__top">
+        <div>
+          <div class="t5-final__name" id="finalName">Oficina Silva</div>
+          <div class="t5-final__label" id="finalPart">Peça paralela · pronto em 1 dia</div>
+        </div>
+        <div>
+          <div class="t5-final__label">Total</div>
+          <div class="t5-final__value" id="finalPrice">R$ 380</div>
+        </div>
+      </div>
+      <button class="aj-btn aj-btn--success" id="btnChoose" data-aj-go="T06-agendamento.html">Escolher esta oficina</button>
+    </div>
+
+    <div class="t5-foot aj-enter" id="foot" hidden>
+      <span id="footText">Continua em T-06 Agendamento →</span>
+      <button class="t5-replay" id="btnReplay">↻ replay</button>
+    </div>
+
+  </div>
+
+  <div class="aj-input">
+    <input class="aj-input__field" type="text" placeholder="Mensagem" aria-label="Mensagem">
+    <button class="aj-input__send" aria-label="Enviar">↑</button>
+  </div>
+
+  <div class="t5-toast" id="toast"></div>
+</div>
+
+<script src="aj.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var scroll = document.getElementById('scroll');
+  var toast  = document.getElementById('toast');
+
+  function down() { AJ.scrollDown(scroll); }
+
+  function say(msg) {
+    toast.textContent = msg;
+    toast.classList.add('is-on');
+    setTimeout(function () { toast.classList.remove('is-on'); }, 1900);
+  }
+
+  /* Mostra um bloco: entra de baixo, digita se tiver data-aj-type. */
+  function show(el, pause) {
+    el.hidden = false;
+    requestAnimationFrame(function () { el.classList.add('is-in'); });
+    down();
+    var p = el.hasAttribute('data-aj-type') ? AJ.typeText(el) : Promise.resolve();
+    return p.then(function () { down(); return AJ.wait(pause == null ? 380 : pause); });
+  }
+
+  /* --- 1 → 2: chegada do 3º orçamento --- */
+  var btnArrive = document.getElementById('btnArrive');
+  btnArrive.addEventListener('click', function () {
+    btnArrive.disabled = true;
+    btnArrive.style.opacity = '.4';
+
+    document.getElementById('dotCentral').classList.remove('t5-dot--wait');
+    var tag = document.getElementById('tagCentral');
+    tag.textContent = 'Respondeu';
+    tag.classList.add('t5-status__tag--ok');
+    document.getElementById('waitCaps').textContent = 'Respostas recebidas';
+    document.getElementById('waitHint').textContent = '3 de 3 responderam, dentro do prazo de 24h.';
+    say('3º orçamento recebido');
+
+    AJ.wait(620)
+      .then(function () { return show(document.getElementById('aiIntro'), 420); })
+      .then(function () {
+        var card = document.getElementById('cardQuotes');
+        card.hidden = false;
+        requestAnimationFrame(function () { card.classList.add('is-in'); });
+        down();
+        return AJ.wait(420);
+      })
+      .then(function () {
+        document.getElementById('scale').classList.add('is-on');   /* faixa desenha */
+        down();
+        return AJ.wait(900);
+      })
+      .then(function () { return show(document.getElementById('ai1'), 520); })
+      .then(function () { return show(document.getElementById('ai2'), 420); })
+      .then(function () { return show(document.getElementById('ai3'), 420); })
+      .then(function () { return show(document.getElementById('cardExp'), 300); })
+      .then(function () { return show(document.getElementById('note'), 300); })
+      .then(function () { return show(document.getElementById('cardShare'), 300); })
+      .then(function () { return show(document.getElementById('cardFinal'), 200); })
+      .then(function () { return show(document.getElementById('foot'), 0); });
+  });
+
+  /* --- seleção de oficina reflete no card de ação --- */
+  var picks = document.querySelectorAll('.t5-pick');
+  Array.prototype.forEach.call(picks, function (btn) {
+    btn.addEventListener('click', function () {
+      Array.prototype.forEach.call(picks, function (b) {
+        b.querySelector('.aj-row').classList.remove('aj-row--on');
+      });
+      btn.querySelector('.aj-row').classList.add('aj-row--on');
+
+      document.getElementById('finalName').textContent  = btn.dataset.shop;
+      document.getElementById('finalPrice').textContent = btn.dataset.price;
+      document.getElementById('finalPart').textContent  =
+        btn.querySelector('.aj-row__sub').textContent;
+
+      var choose = document.getElementById('btnChoose');
+      choose.textContent = 'Escolher esta oficina';
+      choose.disabled = false;
+
+      if (btn.dataset.shop === 'Oficina Central') {
+        say('Peça a justificativa antes de aceitar');
+      }
+    });
+  });
+
+  /* --- compartilhamento --- */
+  var btnWa = document.getElementById('btnWa');
+  btnWa.addEventListener('click', function () {
+    btnWa.textContent = '✓ Resumo enviado';
+    btnWa.classList.remove('aj-btn--ghost');
+    btnWa.classList.add('aj-btn--success');
+    say('Resumo enviado no WhatsApp');
+  });
+
+  /* --- escolha final --- */
+  var btnChoose = document.getElementById('btnChoose');
+  btnChoose.addEventListener('click', function () {
+    var nome = document.getElementById('finalName').textContent;
+    btnChoose.textContent = '✓ ' + nome + ' escolhida';
+    btnChoose.disabled = true;
+    document.getElementById('footText').textContent = 'Continua em T-06 Agendamento →';
+    document.getElementById('footText').style.color = 'var(--aj-accent)';
+    document.getElementById('footText').style.fontWeight = '600';
+    say('Vamos escolher o horário');
+    down();
+  });
+
+  /* --- replay --- */
+  document.getElementById('btnReplay').addEventListener('click', function () {
+    location.reload();
+  });
+})();
+</script>
+</body>
+</html>

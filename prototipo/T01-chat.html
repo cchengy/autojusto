@@ -1,0 +1,402 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auto Justo — T-01 Chat</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* ——— Extras locais da T-01 (não altera tokens.css) ——— */
+  [hidden]{ display:none !important; }
+
+  /* Toggle discreto de estado + replay */
+  .t-topbar{
+    flex:0 0 auto; display:flex; align-items:center; gap:var(--aj-2);
+    padding:0 var(--aj-5) var(--aj-1);
+  }
+  .t-seg{
+    display:inline-flex; padding:2px; gap:2px;
+    background:rgba(148,163,184,.14); border-radius:var(--aj-r-pill);
+  }
+  .t-seg button{
+    border:0; background:transparent; cursor:pointer;
+    font-family:inherit; font-size:10px; font-weight:700;
+    letter-spacing:.10em; text-transform:uppercase;
+    color:var(--aj-text-2); padding:5px var(--aj-3);
+    border-radius:var(--aj-r-pill);
+    transition:background var(--aj-dur) var(--aj-ease), color var(--aj-dur) var(--aj-ease);
+  }
+  .t-seg button.is-on{ background:var(--aj-surface); color:var(--aj-accent); box-shadow:var(--aj-shadow-card); }
+  .t-replay{
+    margin-left:auto; border:0; background:transparent; cursor:pointer;
+    font-family:inherit; font-size:11px; font-weight:600;
+    color:var(--aj-text-2); padding:5px var(--aj-2); border-radius:var(--aj-r-pill);
+  }
+  .t-replay:hover{ color:var(--aj-accent); }
+
+  /* Estado A — chat vazio */
+  .t-spacer{ flex:1 1 auto; min-height:var(--aj-10); }
+  .t-hero{
+    font-size:var(--aj-fs-xl); line-height:1.35; color:var(--aj-ai-text);
+    max-width:94%; align-self:flex-start;
+  }
+  .t-hero em{ font-style:normal; color:var(--aj-text-2); display:block; font-size:var(--aj-fs-body); margin-top:var(--aj-3); line-height:var(--aj-lh-body); }
+  .t-pills{ display:flex; flex-direction:column; align-items:flex-start; gap:var(--aj-2); }
+  .t-pill{
+    border:1px solid var(--aj-border); background:var(--aj-surface);
+    border-radius:var(--aj-r-pill); padding:var(--aj-3) var(--aj-4);
+    font-family:inherit; font-size:var(--aj-fs-sm); font-weight:500;
+    color:var(--aj-ai-text); cursor:pointer; text-align:left;
+    box-shadow:var(--aj-shadow-card);
+    transition:transform 180ms var(--aj-spring), background var(--aj-dur) var(--aj-ease);
+  }
+  .t-pill:active{ transform:scale(.97); background:var(--aj-tint); }
+
+  /* IA digitando */
+  .t-typing{ align-self:flex-start; display:flex; gap:5px; padding:var(--aj-2) 0; }
+  .t-typing span{
+    width:7px; height:7px; border-radius:var(--aj-r-pill);
+    background:var(--aj-text-2); opacity:.45;
+    animation:t-bounce 1.15s var(--aj-ease) infinite;
+  }
+  .t-typing span:nth-child(2){ animation-delay:.15s; }
+  .t-typing span:nth-child(3){ animation-delay:.30s; }
+  @keyframes t-bounce{ 0%,60%,100%{ transform:none; opacity:.30 } 30%{ transform:translateY(-5px); opacity:.85 } }
+
+  /* Mensagem de áudio do usuário */
+  .t-audiomsg{ display:flex; align-items:center; gap:var(--aj-2); }
+  .t-audiomsg .t-mini{ display:flex; align-items:flex-end; gap:2px; height:16px; }
+  .t-audiomsg .t-mini i{ width:2px; background:rgba(255,255,255,.7); border-radius:2px; display:block; }
+
+  /* Linha de continuidade */
+  .t-cont{
+    align-self:center; text-align:center;
+    font-size:var(--aj-fs-sm); color:var(--aj-text-2);
+    padding-top:var(--aj-4); border-top:1px solid var(--aj-border);
+    width:100%; margin-top:var(--aj-1);
+  }
+
+  /* Footer empilhado: barra de anexos + pill */
+  .aj-input.t-stack{ flex-direction:column; align-items:stretch; gap:var(--aj-3); }
+  .t-row{ display:flex; align-items:center; gap:var(--aj-2); }
+  .t-plus{
+    width:40px; height:40px; flex:0 0 40px; border:1px solid var(--aj-border);
+    background:var(--aj-surface); color:var(--aj-accent);
+    border-radius:var(--aj-r-pill); font-size:var(--aj-fs-lg); cursor:pointer;
+    display:grid; place-items:center; line-height:1;
+    transition:transform var(--aj-dur) var(--aj-spring);
+  }
+  .t-plus.is-open{ transform:rotate(45deg); }
+
+  .t-attach{
+    background:var(--aj-surface); border:1px solid var(--aj-border);
+    border-radius:var(--aj-r-card); padding:var(--aj-3) var(--aj-3) var(--aj-2);
+    box-shadow:var(--aj-shadow-card);
+  }
+  .t-attach[hidden]{ display:none; }
+  .t-attach__caps{
+    font-size:var(--aj-fs-caps); letter-spacing:.12em; text-transform:uppercase;
+    color:var(--aj-text-2); font-weight:600; padding:0 var(--aj-1) var(--aj-2);
+  }
+  .t-atts{ display:flex; gap:var(--aj-2); }
+  .t-att{
+    flex:1 1 0; border:0; background:var(--aj-tint); border-radius:var(--aj-3);
+    padding:var(--aj-3) var(--aj-1); cursor:pointer; font-family:inherit;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    transition:transform 180ms var(--aj-spring);
+  }
+  .t-att:active{ transform:scale(.96); }
+  .t-att.is-on{ background:rgba(5,37,119,.10); box-shadow:inset 0 0 0 1px rgba(5,37,119,.25); }
+  .t-att b{ font-size:var(--aj-fs-lg); line-height:1; }
+  .t-att i{ font-style:normal; font-size:var(--aj-fs-caps); font-weight:600; color:var(--aj-ai-text); }
+
+  /* Gravando */
+  .t-rec{
+    display:flex; align-items:center; gap:var(--aj-3);
+    background:var(--aj-surface); border:1px solid var(--aj-border);
+    border-radius:var(--aj-r-pill); padding:var(--aj-2) var(--aj-3) var(--aj-2) var(--aj-4);
+    flex:1 1 auto; min-width:0;
+  }
+  .t-recdot{
+    width:9px; height:9px; flex:0 0 9px; border-radius:var(--aj-r-pill);
+    background:#EF4444; animation:t-pulse 1.1s var(--aj-ease) infinite;
+  }
+  @keyframes t-pulse{ 0%,100%{ opacity:1 } 50%{ opacity:.25 } }
+  .t-wave{ display:flex; align-items:center; gap:2px; height:24px; flex:1 1 auto; overflow:hidden; }
+  .t-wave i{
+    width:3px; flex:0 0 3px; border-radius:2px; background:var(--aj-accent); opacity:.55;
+    animation:t-bar .9s var(--aj-ease) infinite alternate;
+  }
+  @keyframes t-bar{ from{ height:4px } to{ height:22px } }
+  .t-timer{ font-size:var(--aj-fs-sm); font-weight:600; color:var(--aj-text-2); font-variant-numeric:tabular-nums; }
+  .t-stop{
+    width:40px; height:40px; flex:0 0 40px; border:0; border-radius:var(--aj-r-pill);
+    background:var(--aj-accent); color:#fff; cursor:pointer; font-size:var(--aj-fs-body);
+    display:grid; place-items:center;
+  }
+
+  /* Chip de foto anexada */
+  .t-chip{
+    align-self:flex-start; display:inline-flex; align-items:center; gap:var(--aj-2);
+    background:var(--aj-tint); border-radius:var(--aj-r-pill);
+    padding:var(--aj-1) var(--aj-3); font-size:var(--aj-fs-sm); color:var(--aj-ai-text);
+  }
+  .t-chip button{ border:0; background:transparent; cursor:pointer; color:var(--aj-text-2); font-size:var(--aj-fs-sm); padding:0; }
+</style>
+</head>
+<body><div class="aj-device"><div class="aj-statusbar"><span>9:41</span><span>▮▮▮ ▾</span></div>
+
+<header class="aj-header">
+  <div class="aj-header__avatar">AJ</div>
+  <div class="aj-header__name">Auto Justo</div>
+  <div class="aj-header__ctx">🚗 HB20 2018</div>
+</header>
+
+<div class="t-topbar">
+  <div class="t-seg" id="seg">
+    <button type="button" data-state="A" class="is-on">vazio</button>
+    <button type="button" data-state="B">conversa</button>
+  </div>
+  <button type="button" class="t-replay" id="replay">↻ replay</button>
+</div>
+
+<main class="aj-scroll" id="scroll">
+  <!-- ESTADO A — chat vazio -->
+  <section id="stateA" style="display:flex;flex-direction:column;gap:var(--aj-5);flex:1 1 auto;">
+    <div class="t-spacer"></div>
+    <div class="t-hero">Oi, Camila. O que o carro fez hoje?<em>Pode falar do seu jeito — texto, áudio ou foto.</em></div>
+    <div class="t-pills" id="pills">
+      <button type="button" class="t-pill">Tá fazendo um barulho</button>
+      <button type="button" class="t-pill">Luz acendeu no painel</button>
+      <button type="button" class="t-pill">Meu carro parou</button>
+    </div>
+  </section>
+
+  <!-- ESTADO B — conversa em andamento -->
+  <section id="stateB" style="display:none;flex-direction:column;gap:var(--aj-5);"></section>
+</main>
+
+<footer class="aj-input t-stack">
+  <div class="t-attach aj-enter" id="attach" hidden>
+    <div class="t-attach__caps">Como você quer contar</div>
+    <div class="t-atts">
+      <button type="button" class="t-att" id="attAudio"><b>🎤</b><i>Áudio</i></button>
+      <button type="button" class="t-att" id="attFoto"><b>📷</b><i>Foto</i></button>
+      <button type="button" class="t-att" id="attTexto"><b>⌨️</b><i>Texto</i></button>
+    </div>
+  </div>
+
+  <div class="t-chip" id="chip" hidden><span>📷 painel.jpg</span><button type="button" id="chipX">✕</button></div>
+
+  <div class="t-row" id="rowNormal">
+    <button type="button" class="t-plus" id="plus">＋</button>
+    <input class="aj-input__field" id="field" placeholder="Mensagem" autocomplete="off">
+    <button type="button" class="aj-input__send" id="send">↑</button>
+  </div>
+
+  <div class="t-row" id="rowRec" hidden>
+    <div class="t-rec">
+      <span class="t-recdot"></span>
+      <span class="t-wave" id="wave"></span>
+      <span class="t-timer" id="timer">0:00</span>
+    </div>
+    <button type="button" class="t-stop" id="stop">✓</button>
+  </div>
+</footer>
+</div>
+
+<script src="aj.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var scroll  = document.getElementById('scroll');
+  var A       = document.getElementById('stateA');
+  var B       = document.getElementById('stateB');
+  var seg     = document.getElementById('seg');
+  var attach  = document.getElementById('attach');
+  var plus    = document.getElementById('plus');
+  var field   = document.getElementById('field');
+  var chip    = document.getElementById('chip');
+  var rowRec  = document.getElementById('rowRec');
+  var rowNorm = document.getElementById('rowNormal');
+  var wave    = document.getElementById('wave');
+  var timerEl = document.getElementById('timer');
+
+  var run = 0;          // id do roteiro atual (cancela o anterior)
+  var recTimer = null;
+
+  /* ---------- helpers ---------- */
+  function el(cls, html) {
+    var d = document.createElement('div');
+    d.className = cls;
+    if (html != null) d.innerHTML = html;
+    return d;
+  }
+  function ck(id) { return id === run ? Promise.resolve() : Promise.reject('cancel'); }
+  function down() { AJ.scrollDown(scroll); }
+
+  /* ---------- estados ---------- */
+  function setState(s) {
+    A.style.display = s === 'A' ? 'flex' : 'none';
+    B.style.display = s === 'B' ? 'flex' : 'none';
+    Array.prototype.forEach.call(seg.children, function (b) {
+      b.classList.toggle('is-on', b.getAttribute('data-state') === s);
+    });
+    if (s === 'A') { run++; B.innerHTML = ''; closeAttach(); stopRec(true); field.value = ''; }
+    down();
+  }
+
+  /* ---------- mensagens ---------- */
+  function addUser(html) {
+    var d = el('aj-msg-user aj-enter', html);
+    B.appendChild(d); down();
+    return AJ.reveal([d]).then(down);
+  }
+  function typingOn() {
+    var t = el('t-typing aj-enter', '<span></span><span></span><span></span>');
+    B.appendChild(t); t.classList.add('is-in'); down();
+    return t;
+  }
+  function addAI(text, pause) {
+    var t = typingOn();
+    return AJ.wait(pause == null ? 1200 : pause).then(function () {
+      t.parentNode && t.parentNode.removeChild(t);
+      var d = el('aj-msg-ai aj-enter');
+      B.appendChild(d); d.classList.add('is-in');
+      return AJ.typeText(d, text, 46).then(down);
+    });
+  }
+
+  /* ---------- barra de anexos ---------- */
+  function openAttach() {
+    attach.hidden = false;
+    plus.classList.add('is-open');
+    requestAnimationFrame(function () { attach.classList.add('is-in'); });
+  }
+  function closeAttach() {
+    attach.hidden = true;
+    attach.classList.remove('is-in');
+    plus.classList.remove('is-open');
+    document.getElementById('attAudio').classList.remove('is-on');
+  }
+
+  /* ---------- gravação simulada ---------- */
+  function buildWave() {
+    if (wave.children.length) return;
+    for (var i = 0; i < 26; i++) {
+      var b = document.createElement('i');
+      b.style.animationDelay = (-(i * 97) % 900) + 'ms';
+      b.style.animationDuration = (620 + (i * 53) % 420) + 'ms';
+      wave.appendChild(b);
+    }
+  }
+  function startRec() {
+    buildWave();
+    document.getElementById('attAudio').classList.add('is-on');
+    rowNorm.hidden = true; rowRec.hidden = false;
+    var s = 0; timerEl.textContent = '0:00';
+    recTimer = setInterval(function () {
+      s++; timerEl.textContent = '0:' + (s < 10 ? '0' : '') + s;
+    }, 1000);
+  }
+  function stopRec(silent) {
+    if (recTimer) { clearInterval(recTimer); recTimer = null; }
+    rowRec.hidden = true; rowNorm.hidden = false;
+    document.getElementById('attAudio').classList.remove('is-on');
+    if (silent) return;
+    var secs = timerEl.textContent;
+    var bars = '';
+    for (var i = 0; i < 14; i++) bars += '<i style="height:' + (4 + ((i * 7) % 13)) + 'px"></i>';
+    setState('B');
+    addUser('<span class="t-audiomsg">▶ <span class="t-mini">' + bars + '</span> ' + secs + '</span>');
+    closeAttach();
+  }
+
+  /* ---------- roteiro (estado B) ---------- */
+  function play() {
+    var id = ++run;
+    B.innerHTML = '';
+    closeAttach(); stopRec(true);
+    setState('B');
+    field.value = '';
+
+    return AJ.wait(340)
+      .then(function () { return ck(id); })
+      .then(function () {
+        return addUser('Meu carro tá fazendo um barulho tipo tec-tec quando eu viro o volante pra direita');
+      })
+      .then(function () { return ck(id); }).then(function () { return AJ.wait(560); })
+      .then(function () { return ck(id); })
+      .then(function () {
+        return addAI('Acontece só em baixa velocidade, tipo manobrando? E some quando você anda em linha reta?', 1300);
+      })
+      .then(function () { return ck(id); }).then(function () { return AJ.wait(720); })
+      .then(function () { return ck(id); })
+      .then(function () { return addUser('Isso, só quando manobro. Em linha reta não faz nada'); })
+      .then(function () { return ck(id); }).then(function () { return AJ.wait(520); })
+      .then(function () { return ck(id); })
+      .then(function () {
+        return addAI('Entendi. Esse tec-tec só ao esterçar é bem característico. Vou cruzar com a base do seu HB20 2018 e com os problemas mais comuns nessa quilometragem.', 1400);
+      })
+      .then(function () { return ck(id); }).then(function () { return AJ.wait(500); })
+      .then(function () { return ck(id); })
+      .then(function () {
+        openAttach(); down();
+        return AJ.wait(700);
+      })
+      .then(function () { return ck(id); })
+      .then(function () {
+        var c = el('t-cont aj-enter', 'Continua em T-02 Diagnóstico →');
+        B.appendChild(c);
+        return AJ.reveal([c]).then(down);
+      })
+      .catch(function () { /* roteiro cancelado por replay ou troca de estado */ });
+  }
+
+  /* ---------- interações ---------- */
+  seg.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-state]');
+    if (!b) return;
+    var s = b.getAttribute('data-state');
+    if (s === 'B') play(); else setState('A');
+  });
+
+  document.getElementById('replay').addEventListener('click', play);
+
+  document.getElementById('pills').addEventListener('click', function (e) {
+    if (e.target.classList.contains('t-pill')) play();
+  });
+
+  plus.addEventListener('click', function () {
+    if (attach.hidden) openAttach(); else closeAttach();
+  });
+
+  document.getElementById('attAudio').addEventListener('click', function () {
+    if (recTimer) stopRec(); else startRec();
+  });
+  document.getElementById('stop').addEventListener('click', function () { stopRec(); });
+
+  document.getElementById('attFoto').addEventListener('click', function () {
+    chip.hidden = false; closeAttach(); field.focus();
+  });
+  document.getElementById('chipX').addEventListener('click', function () { chip.hidden = true; });
+
+  document.getElementById('attTexto').addEventListener('click', function () {
+    closeAttach(); field.focus();
+  });
+
+  function sendField() {
+    var v = field.value.trim();
+    if (!v) { field.focus(); return; }
+    run++;
+    setState('B');
+    field.value = '';
+    chip.hidden = true;
+    addUser(v.replace(/[<>]/g, ''));
+  }
+  document.getElementById('send').addEventListener('click', sendField);
+  field.addEventListener('keydown', function (e) { if (e.key === 'Enter') sendField(); });
+
+  setState('A');
+})();
+</script>
+</body></html>

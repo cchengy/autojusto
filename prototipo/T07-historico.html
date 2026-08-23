@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auto Justo — T-07 Histórico</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* ---- Locais da T-07 ---- */
+
+  .t7-ai-note {
+    align-self: flex-start;
+    max-width: 92%;
+    font-size: var(--aj-fs-sm);
+    line-height: 1.5;
+    color: var(--aj-text-2);
+  }
+
+  /* Faixa de "a Auto Justo puxou conversa" — não foi o cliente que abriu */
+  .t7-proativo {
+    align-self: stretch;
+    display: flex; align-items: center; gap: var(--aj-2);
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--aj-text-2);
+  }
+  .t7-proativo::after {
+    content: ''; flex: 1 1 auto; height: 1px; background: var(--aj-border);
+  }
+
+  /* Botões de resposta */
+  .t7-replies { display: flex; gap: var(--aj-2); align-self: stretch; }
+  .t7-reply {
+    flex: 1 1 0;
+    padding: var(--aj-3) var(--aj-2);
+    border-radius: var(--aj-r-pill);
+    border: 1px solid var(--aj-border);
+    background: var(--aj-surface);
+    font-family: inherit;
+    font-size: var(--aj-fs-sm);
+    font-weight: 600;
+    color: var(--aj-accent);
+    cursor: pointer;
+    transition: background var(--aj-dur) var(--aj-ease),
+                color var(--aj-dur) var(--aj-ease),
+                border-color var(--aj-dur) var(--aj-ease),
+                opacity var(--aj-dur) var(--aj-ease);
+  }
+  .t7-reply:hover { background: var(--aj-tint); }
+  .t7-reply.is-picked { background: var(--aj-accent); border-color: var(--aj-accent); color: #fff; }
+  .t7-replies.is-locked .t7-reply:not(.is-picked) { opacity: .38; pointer-events: none; }
+
+  /* Estrelas */
+  .t7-stars { display: flex; gap: var(--aj-2); justify-content: center; margin: var(--aj-2) 0 var(--aj-1); }
+  .t7-star {
+    border: 0; background: none; padding: 0; cursor: pointer;
+    font-size: 30px; line-height: 1;
+    color: var(--aj-border);
+    transition: color 180ms var(--aj-ease), transform 180ms var(--aj-spring);
+  }
+  .t7-star:hover { transform: scale(1.14); }
+  .t7-star.is-on { color: var(--aj-warn); }
+  .t7-stars.is-locked .t7-star { pointer-events: none; }
+  .t7-stars-cap {
+    text-align: center;
+    font-size: var(--aj-fs-caps);
+    color: var(--aj-text-2);
+    min-height: 15px;
+  }
+
+  /* Campo aberto opcional */
+  .t7-open {
+    width: 100%;
+    margin-top: var(--aj-3);
+    background: var(--aj-bg);
+    border: 1px solid var(--aj-border);
+    border-radius: var(--aj-3);
+    padding: var(--aj-3);
+    font-family: inherit;
+    font-size: var(--aj-fs-sm);
+    color: var(--aj-ai-text);
+    resize: none;
+    outline: none;
+  }
+  .t7-open::placeholder { color: var(--aj-text-2); }
+
+  /* Timeline do carro — interface tradicional, pra ler no próprio ritmo */
+  .t7-tl { position: relative; padding-left: var(--aj-6); }
+  .t7-tl::before {
+    content: ''; position: absolute;
+    left: 7px; top: 6px; bottom: 6px;
+    width: 2px; background: var(--aj-border);
+  }
+  .t7-ev { position: relative; padding-bottom: var(--aj-5); }
+  .t7-ev:last-child { padding-bottom: 0; }
+  .t7-ev::before {
+    content: ''; position: absolute;
+    left: calc(var(--aj-6) * -1 + 2px);
+    top: 4px;
+    width: 12px; height: 12px;
+    border-radius: var(--aj-r-pill);
+    background: var(--aj-border);
+    box-shadow: 0 0 0 3px var(--aj-surface);
+  }
+  .t7-ev--novo::before { background: var(--aj-success); }
+  .t7-ev__date {
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--aj-text-2);
+    font-weight: 600;
+  }
+  .t7-ev__title { font-size: var(--aj-fs-body); font-weight: 600; margin-top: 2px; }
+  .t7-ev__sub {
+    font-size: var(--aj-fs-sm);
+    color: var(--aj-text-2);
+    margin-top: 2px;
+    display: flex; gap: var(--aj-2); flex-wrap: wrap;
+  }
+  .t7-ev__sub b { color: var(--aj-ai-text); font-weight: 600; }
+
+  .t7-auto {
+    display: inline-flex; align-items: center; gap: var(--aj-1);
+    margin-top: var(--aj-2);
+    font-size: var(--aj-fs-caps);
+    font-weight: 600;
+    color: #047857;
+    background: rgba(16,185,129,.10);
+    padding: 3px var(--aj-2);
+    border-radius: var(--aj-r-pill);
+  }
+
+  /* Bloco de manutenção preventiva */
+  .t7-prev-line {
+    display: flex; align-items: baseline; gap: var(--aj-3);
+    padding: var(--aj-2) 0;
+    font-size: var(--aj-fs-sm);
+  }
+  .t7-prev-line__label { flex: 1 1 auto; color: var(--aj-text-2); }
+  .t7-prev-line__val { font-weight: 600; white-space: nowrap; }
+  .t7-divider { height: 1px; background: var(--aj-border); margin: var(--aj-3) 0; }
+
+  .t7-secondary {
+    background: none; border: 0; padding: var(--aj-2);
+    width: 100%;
+    font-family: inherit;
+    font-size: var(--aj-fs-sm);
+    font-weight: 600;
+    color: var(--aj-text-2);
+    cursor: pointer;
+    text-align: center;
+    margin-top: var(--aj-2);
+  }
+  .t7-secondary:hover { color: var(--aj-accent); }
+
+  .t7-next {
+    align-self: center;
+    margin-top: var(--aj-2);
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .06em;
+    color: var(--aj-text-2);
+  }
+  .t7-next[role="link"]:hover { color: var(--aj-accent); }
+
+  .t7-replay {
+    position: absolute;
+    right: var(--aj-4);
+    bottom: 96px;
+    z-index: 5;
+    border: 1px solid var(--aj-border);
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(6px);
+    border-radius: var(--aj-r-pill);
+    padding: var(--aj-2) var(--aj-3);
+    font-family: inherit;
+    font-size: var(--aj-fs-caps);
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--aj-text-2);
+    cursor: pointer;
+    box-shadow: var(--aj-shadow-card);
+  }
+  .t7-replay:hover { color: var(--aj-accent); }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="aj-device">
+
+  <div class="aj-statusbar">
+    <span>9:41</span>
+    <span>▮▮▮ ⌁ 87%</span>
+  </div>
+
+  <header class="aj-header">
+    <div class="aj-header__avatar">AJ</div>
+    <div class="aj-header__name">Auto Justo</div>
+    <div class="aj-header__ctx">HB20 2018</div>
+  </header>
+
+  <main class="aj-scroll" id="scroll">
+
+    <div class="t7-proativo">Quinta, 09:41</div>
+
+    <!-- 1. A IA puxa conversa sozinha -->
+    <p class="aj-msg-ai" id="abre" hidden
+       data-aj-type="Oi! Você levou o carro na Oficina Silva na terça pra resolver o tec-tec na direção. Deu certo?"></p>
+
+    <div class="t7-replies" id="replies" hidden>
+      <button class="t7-reply" type="button" data-branch="sim">Sim, resolveu</button>
+      <button class="t7-reply" type="button" data-branch="nao">Ainda faz barulho</button>
+    </div>
+
+    <div class="aj-msg-user" id="userAnswer" hidden></div>
+    <p class="aj-msg-ai" id="branch1" hidden></p>
+
+    <!-- 2a. RAMO "RESOLVEU" — avaliação por conversa -->
+    <section class="aj-card aj-enter" id="aval" hidden>
+      <div class="aj-card__caps">Como foi o atendimento</div>
+      <div class="t7-stars" id="stars">
+        <button class="t7-star" type="button" data-v="1" aria-label="1 estrela">★</button>
+        <button class="t7-star" type="button" data-v="2" aria-label="2 estrelas">★</button>
+        <button class="t7-star" type="button" data-v="3" aria-label="3 estrelas">★</button>
+        <button class="t7-star" type="button" data-v="4" aria-label="4 estrelas">★</button>
+        <button class="t7-star" type="button" data-v="5" aria-label="5 estrelas">★</button>
+      </div>
+      <div class="t7-stars-cap" id="starsCap"></div>
+      <textarea class="t7-open" id="openField" rows="2" placeholder="Quer contar mais alguma coisa? (opcional)"></textarea>
+    </section>
+
+    <!-- pergunta do preço -->
+    <p class="aj-msg-ai" id="perguntaPreco" hidden></p>
+
+    <div class="t7-replies" id="precoReplies" hidden>
+      <button class="t7-reply" type="button" data-preco="igual">Foi R$ 380 mesmo</button>
+      <button class="t7-reply" type="button" data-preco="mais">Cobraram mais</button>
+    </div>
+
+    <div class="aj-msg-user" id="userPreco" hidden></div>
+    <p class="aj-msg-ai" id="respPreco" hidden></p>
+
+    <!-- 2b. RAMO "NÃO RESOLVEU" -->
+    <section class="aj-card aj-enter" id="naoResolveu" hidden>
+      <div class="aj-card__caps">Voltar pro diagnóstico</div>
+      <p class="t7-ai-note" style="max-width:none;margin:0 0 var(--aj-3)">
+        Eu guardo tudo que já foi feito: o sintoma que você descreveu, a hipótese, o serviço da Silva e o valor pago.
+        Você não vai precisar repetir nada — a gente continua de onde parou.
+      </p>
+      <button class="aj-btn" type="button" data-aj-go="T02-diagnostico.html">Contar o que continua acontecendo</button>
+      <button class="t7-secondary" type="button" data-aj-go="T04-perfil-oficina.html">Falar com a Oficina Silva sobre a garantia</button>
+    </section>
+
+    <!-- 3. Registro automático no histórico -->
+    <section class="aj-card aj-enter" id="hist" hidden>
+      <div class="aj-card__caps">Histórico do HB20</div>
+      <div class="t7-tl">
+
+        <div class="t7-ev t7-ev--novo">
+          <div class="t7-ev__date">18 mar 2026 · 84.200 km</div>
+          <div class="t7-ev__title">Junta homocinética dianteira direita</div>
+          <div class="t7-ev__sub"><span>Oficina Silva</span> · <b>R$ 380</b> · <span>peça paralela</span></div>
+          <span class="t7-auto">✓ registrado sozinho</span>
+        </div>
+
+        <div class="t7-ev">
+          <div class="t7-ev__date">02 jul 2025 · 78.900 km</div>
+          <div class="t7-ev__title">Troca de óleo e filtro</div>
+          <div class="t7-ev__sub"><span>Oficina Silva</span> · <b>R$ 160</b></div>
+        </div>
+
+        <div class="t7-ev">
+          <div class="t7-ev__date">14 fev 2025 · 74.100 km</div>
+          <div class="t7-ev__title">Pastilhas de freio dianteiras</div>
+          <div class="t7-ev__sub"><span>Auto Center Vila Nova</span> · <b>R$ 290</b></div>
+        </div>
+
+      </div>
+    </section>
+
+    <p class="t7-ai-note" id="notaHist" hidden>Esse histórico se preenche sozinho conforme você usa o app. Na hora de vender o carro, ele vale como prova de que a manutenção foi feita.</p>
+
+    <!-- 4. Manutenção preventiva proativa -->
+    <div class="t7-proativo" id="sep2" hidden>Hoje, 08:12</div>
+
+    <p class="aj-msg-ai" id="prev1" hidden
+       data-aj-type="Faz 8 meses que você trocou o óleo do HB20. O manual do seu modelo pede a cada 10 mil km ou 12 meses — mas como você roda quase só na cidade, com trânsito parado, vale antecipar um pouco."></p>
+
+    <section class="aj-card aj-enter" id="prevCard" hidden>
+      <div class="aj-card__caps">Estimativa da troca de óleo</div>
+      <div class="t7-prev-line">
+        <div class="t7-prev-line__label">Óleo e filtro</div>
+        <div class="t7-prev-line__val">R$ 120 – 180</div>
+      </div>
+      <div class="t7-divider"></div>
+      <div class="t7-prev-line">
+        <div class="t7-prev-line__label">Última na Oficina Silva</div>
+        <div class="t7-prev-line__val">R$ 160</div>
+      </div>
+      <button class="aj-btn" type="button" style="margin-top:var(--aj-4)" data-aj-go="T06-agendamento.html">Agendar na Oficina Silva</button>
+      <button class="t7-secondary" type="button" data-aj-go="T03-oficinas.html">Ver outras oficinas</button>
+    </section>
+
+    <p class="t7-ai-note" id="prev2" hidden>Se quiser, eu aviso de novo daqui a duas semanas. Não vou insistir todo dia.</p>
+
+    <div class="t7-next" id="next" hidden>Continua em T-08 Emergência →</div>
+
+  </main>
+
+  <button class="t7-replay" type="button" id="replay">↻ replay</button>
+
+  <div class="aj-input">
+    <input class="aj-input__field" type="text" placeholder="Mensagem" aria-label="Mensagem">
+    <button class="aj-input__send" type="button" aria-label="Enviar">↑</button>
+  </div>
+
+</div>
+
+<script src="aj.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var scroll   = document.getElementById('scroll');
+  var abre     = document.getElementById('abre');
+  var replies  = document.getElementById('replies');
+  var userAns  = document.getElementById('userAnswer');
+  var branch1  = document.getElementById('branch1');
+  var aval     = document.getElementById('aval');
+  var stars    = document.getElementById('stars');
+  var starsCap = document.getElementById('starsCap');
+  var openF    = document.getElementById('openField');
+  var pergP    = document.getElementById('perguntaPreco');
+  var precoR   = document.getElementById('precoReplies');
+  var userP    = document.getElementById('userPreco');
+  var respP    = document.getElementById('respPreco');
+  var naoRes   = document.getElementById('naoResolveu');
+  var hist     = document.getElementById('hist');
+  var notaH    = document.getElementById('notaHist');
+  var sep2     = document.getElementById('sep2');
+  var prev1    = document.getElementById('prev1');
+  var prevC    = document.getElementById('prevCard');
+  var prev2    = document.getElementById('prev2');
+  var next     = document.getElementById('next');
+  var replay   = document.getElementById('replay');
+
+  var STAR_CAP = ['', 'Péssimo', 'Ruim', 'Deu pro gasto', 'Bom', 'Muito bom'];
+
+  var starBtns = Array.prototype.slice.call(stars.querySelectorAll('.t7-star'));
+
+  function paintStars(v) {
+    starBtns.forEach(function (b) {
+      b.classList.toggle('is-on', Number(b.dataset.v) <= v);
+    });
+    starsCap.textContent = STAR_CAP[v] || '';
+  }
+
+  stars.addEventListener('click', function (e) {
+    var b = e.target.closest('.t7-star');
+    if (!b) return;
+    var v = Number(b.dataset.v);
+    paintStars(v);
+    stars.classList.add('is-locked');
+    askPreco(v);
+  });
+
+  function askPreco(nota) {
+    if (!pergP.hidden) return;
+    pergP.hidden = false;
+    var texto = nota >= 4
+      ? 'Anotado, obrigado. Última coisa: o preço final ficou perto dos R$ 380 que eles orçaram?'
+      : 'Obrigado por ser sincero — isso ajuda quem for escolher depois de você. E o preço final, ficou perto dos R$ 380 que eles orçaram?';
+    AJ.typeText(pergP, texto).then(function () {
+      precoR.hidden = false;
+      AJ.scrollDown(scroll);
+    });
+    AJ.scrollDown(scroll);
+  }
+
+  precoR.addEventListener('click', function (e) {
+    var b = e.target.closest('.t7-reply');
+    if (!b) return;
+    b.classList.add('is-picked');
+    precoR.classList.add('is-locked');
+
+    var mais = b.dataset.preco === 'mais';
+    userP.textContent = b.textContent.trim();
+    userP.hidden = false;
+
+    respP.hidden = false;
+    AJ.wait(420).then(function () {
+      return AJ.typeText(respP, mais
+        ? 'Isso é importante. Vou registrar a diferença na ficha da Oficina Silva — quando várias pessoas relatam cobrança acima do orçado, a nota de clareza do orçamento cai e quem vier depois já é avisado.'
+        : 'Ótimo. Orçamento que fecha no valor combinado sobe a nota de clareza da oficina — é isso que faz a próxima pessoa conseguir confiar nela.');
+    }).then(function () {
+      AJ.scrollDown(scroll);
+      hist.hidden = false;
+      return AJ.reveal([hist], 0);
+    }).then(function () {
+      AJ.scrollDown(scroll);
+      notaH.hidden = false;
+      return AJ.wait(700);
+    }).then(runPreventiva);
+  });
+
+  function runPreventiva() {
+    sep2.hidden = false;
+    AJ.scrollDown(scroll);
+    return AJ.wait(500)
+      .then(function () {
+        prev1.hidden = false;
+        return AJ.typeText(prev1);
+      })
+      .then(function () {
+        AJ.scrollDown(scroll);
+        prevC.hidden = false;
+        return AJ.reveal([prevC], 0);
+      })
+      .then(function () {
+        AJ.scrollDown(scroll);
+        prev2.hidden = false;
+        next.hidden = false;
+        AJ.scrollDown(scroll);
+      });
+  }
+
+  replies.addEventListener('click', function (e) {
+    var b = e.target.closest('.t7-reply');
+    if (!b) return;
+    b.classList.add('is-picked');
+    replies.classList.add('is-locked');
+
+    var resolveu = b.dataset.branch === 'sim';
+    userAns.textContent = b.textContent.trim();
+    userAns.hidden = false;
+    AJ.scrollDown(scroll);
+
+    branch1.hidden = false;
+    AJ.wait(420).then(function () {
+      return AJ.typeText(branch1, resolveu
+        ? 'Que bom. Já registrei o serviço no histórico do seu carro — você não precisa preencher nada.'
+        : 'Então a gente não terminou. Não vou pedir avaliação agora: primeiro resolve o seu carro.');
+    }).then(function () {
+      AJ.scrollDown(scroll);
+      if (resolveu) {
+        aval.hidden = false;
+        return AJ.reveal([aval], 0).then(function () { AJ.scrollDown(scroll); });
+      }
+      naoRes.hidden = false;
+      return AJ.reveal([naoRes], 0).then(function () {
+        AJ.scrollDown(scroll);
+        next.hidden = false;
+      });
+    });
+  });
+
+  function run() {
+    [abre, userAns, branch1, aval, pergP, userP, respP, naoRes,
+     hist, notaH, sep2, prev1, prevC, prev2, next].forEach(function (el) { el.hidden = true; });
+    replies.hidden = true;
+    precoR.hidden = true;
+    replies.classList.remove('is-locked');
+    precoR.classList.remove('is-locked');
+    stars.classList.remove('is-locked');
+    document.querySelectorAll('.t7-reply').forEach(function (b) { b.classList.remove('is-picked'); });
+    [aval, naoRes, hist, prevC].forEach(function (el) { el.classList.remove('is-in'); });
+    paintStars(0);
+    openF.value = '';
+    scroll.scrollTop = 0;
+
+    AJ.wait(700)
+      .then(function () {
+        abre.hidden = false;
+        return AJ.typeText(abre);
+      })
+      .then(function () {
+        replies.hidden = false;
+        AJ.scrollDown(scroll);
+      });
+  }
+
+  replay.addEventListener('click', run);
+  run();
+})();
+</script>
+</body>
+</html>

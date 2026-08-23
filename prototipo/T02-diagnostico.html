@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auto Justo — T-02 Diagnóstico</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* ---- Locais da T-02 (não existem em tokens.css) ---- */
+
+  /* Rótulo "Pensando…" acima do checklist */
+  .t2-thinking {
+    display: flex; align-items: center; gap: var(--aj-2);
+    font-size: var(--aj-fs-sm);
+    color: var(--aj-text-2);
+    font-weight: 600;
+    letter-spacing: .04em;
+    margin-bottom: var(--aj-4);
+    transition: opacity var(--aj-dur) var(--aj-ease);
+  }
+  .t2-thinking.is-done { opacity: 0; }
+  .t2-thinking__dot {
+    width: 6px; height: 6px; border-radius: var(--aj-r-pill);
+    background: var(--aj-accent);
+    animation: t2-pulse 1.1s var(--aj-ease) infinite;
+  }
+  .t2-thinking__dot:nth-child(2) { animation-delay: .18s; }
+  .t2-thinking__dot:nth-child(3) { animation-delay: .36s; margin-right: var(--aj-1); }
+  @keyframes t2-pulse { 0%,100% { opacity:.25; transform: scale(.8);} 50% { opacity:1; transform: scale(1);} }
+
+  .t2-checklist { display: flex; flex-direction: column; gap: var(--aj-3); }
+
+  /* Texto solto da IA — variações */
+  .t2-ai-note {
+    align-self: flex-start;
+    max-width: 92%;
+    font-size: var(--aj-fs-sm);
+    line-height: 1.5;
+    color: var(--aj-text-2);
+  }
+  .t2-stack { display: flex; flex-direction: column; gap: var(--aj-3); align-self: stretch; }
+
+  /* Passos numerados da orientação */
+  .t2-steps { list-style: none; margin: 0; padding: 0; counter-reset: t2; }
+  .t2-steps li {
+    counter-increment: t2;
+    display: flex; gap: var(--aj-3);
+    align-items: flex-start;
+    font-size: var(--aj-fs-sm);
+    line-height: 1.5;
+    padding: var(--aj-2) 0;
+  }
+  .t2-steps li::before {
+    content: counter(t2);
+    flex: 0 0 22px;
+    width: 22px; height: 22px;
+    border-radius: var(--aj-r-pill);
+    background: var(--aj-tint);
+    color: var(--aj-accent);
+    font-size: var(--aj-fs-caps);
+    font-weight: 700;
+    display: grid; place-items: center;
+  }
+
+  .t2-safe {
+    display: flex; gap: var(--aj-2); align-items: flex-start;
+    margin-top: var(--aj-2);
+    padding: var(--aj-2) var(--aj-3);
+    border-radius: var(--aj-3);
+    background: rgba(16,185,129,.08);
+    font-size: var(--aj-fs-caps);
+    line-height: 1.45;
+    color: #047857;
+  }
+
+  .t2-linkbtn {
+    margin-top: var(--aj-3);
+    background: none; border: 0; padding: 0;
+    font-family: inherit;
+    font-size: var(--aj-fs-sm);
+    font-weight: 600;
+    color: var(--aj-accent);
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: var(--aj-1);
+  }
+  .t2-linkbtn__caret { transition: transform var(--aj-dur) var(--aj-ease); font-size: 10px; }
+  .t2-linkbtn.is-open .t2-linkbtn__caret { transform: rotate(180deg); }
+
+  /* Placeholder ilustrado inline */
+  .t2-ref {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 420ms var(--aj-ease), opacity var(--aj-dur) var(--aj-ease), margin-top var(--aj-dur) var(--aj-ease);
+  }
+  .t2-ref.is-open { max-height: 320px; opacity: 1; margin-top: var(--aj-3); }
+  .t2-ref__frame {
+    border: 1px dashed var(--aj-border);
+    border-radius: var(--aj-3);
+    background: var(--aj-bg);
+    padding: var(--aj-3);
+  }
+  .t2-ref__frame svg { display: block; width: 100%; height: auto; }
+  .t2-ref__cap {
+    margin-top: var(--aj-2);
+    font-size: var(--aj-fs-caps);
+    line-height: 1.45;
+    color: var(--aj-text-2);
+  }
+
+  /* Botões de resposta do cliente */
+  .t2-replies { display: flex; gap: var(--aj-2); margin-top: var(--aj-4); }
+  .t2-reply {
+    flex: 1 1 0;
+    padding: var(--aj-3) var(--aj-2);
+    border-radius: var(--aj-r-pill);
+    border: 1px solid var(--aj-border);
+    background: var(--aj-surface);
+    font-family: inherit;
+    font-size: var(--aj-fs-sm);
+    font-weight: 600;
+    color: var(--aj-accent);
+    cursor: pointer;
+    transition: background var(--aj-dur) var(--aj-ease), color var(--aj-dur) var(--aj-ease), border-color var(--aj-dur) var(--aj-ease);
+  }
+  .t2-reply:hover { background: var(--aj-tint); }
+  .t2-reply.is-picked { background: var(--aj-accent); border-color: var(--aj-accent); color: #fff; }
+  .t2-replies.is-locked .t2-reply:not(.is-picked) { opacity: .38; pointer-events: none; }
+
+  /* Estimativa */
+  .t2-est-line {
+    display: flex; align-items: baseline; gap: var(--aj-3);
+    padding: var(--aj-2) 0;
+  }
+  .t2-est-line__label { flex: 1 1 auto; font-size: var(--aj-fs-sm); color: var(--aj-ai-text); }
+  .t2-est-line__label small { display: block; color: var(--aj-text-2); font-size: var(--aj-fs-caps); margin-top: 2px; }
+  .t2-est-line__val { font-size: var(--aj-fs-body); font-weight: 600; white-space: nowrap; }
+  .t2-divider { height: 1px; background: var(--aj-border); margin: var(--aj-3) 0; }
+  .t2-est-total { display: flex; align-items: baseline; gap: var(--aj-3); }
+  .t2-est-total__label {
+    flex: 1 1 auto;
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--aj-text-2);
+    font-weight: 600;
+  }
+  .t2-est-total__val { font-size: var(--aj-fs-xl); font-weight: 700; color: var(--aj-accent); white-space: nowrap; }
+  .t2-est-note {
+    margin-top: var(--aj-3);
+    font-size: var(--aj-fs-caps);
+    line-height: 1.5;
+    color: var(--aj-text-2);
+  }
+
+  /* Ações finais */
+  .t2-share {
+    display: block; width: 100%;
+    margin-top: var(--aj-3);
+    background: none; border: 0; padding: var(--aj-2);
+    font-family: inherit;
+    font-size: var(--aj-fs-sm);
+    font-weight: 600;
+    color: var(--aj-text-2);
+    cursor: pointer;
+    text-align: center;
+  }
+  .t2-share:hover { color: var(--aj-accent); }
+
+  /* Rodapé de protótipo */
+  .t2-next {
+    align-self: center;
+    margin-top: var(--aj-2);
+    font-size: var(--aj-fs-caps);
+    letter-spacing: .06em;
+    color: var(--aj-text-2);
+  }
+
+  .t2-replay {
+    position: absolute;
+    right: var(--aj-4);
+    bottom: 96px;
+    z-index: 5;
+    border: 1px solid var(--aj-border);
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(6px);
+    border-radius: var(--aj-r-pill);
+    padding: var(--aj-2) var(--aj-3);
+    font-family: inherit;
+    font-size: var(--aj-fs-caps);
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--aj-text-2);
+    cursor: pointer;
+    box-shadow: var(--aj-shadow-card);
+  }
+  .t2-replay:hover { color: var(--aj-accent); }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="aj-device">
+
+  <div class="aj-statusbar">
+    <span>9:41</span>
+    <span>▮▮▮ ⌁ 87%</span>
+  </div>
+
+  <header class="aj-header">
+    <div class="aj-header__avatar">AJ</div>
+    <div class="aj-header__name">Auto Justo</div>
+    <div class="aj-header__ctx">HB20 2018</div>
+  </header>
+
+  <main class="aj-scroll" id="scroll">
+
+    <!-- eco da T-01 -->
+    <div class="aj-msg-user">Tá fazendo um tec-tec quando eu manobro pra sair da vaga</div>
+
+    <!-- 1. CHECKLIST -->
+    <section class="t2-stack" id="progresso" hidden>
+      <div>
+        <div class="t2-thinking" id="thinking">
+          <span class="t2-thinking__dot"></span>
+          <span class="t2-thinking__dot"></span>
+          <span class="t2-thinking__dot"></span>
+          Pensando…
+        </div>
+        <div class="t2-checklist" id="checklist">
+          <div class="aj-check aj-enter"><span class="aj-check__mark">✓</span>Analisando seu HB20 2018</div>
+          <div class="aj-check aj-enter"><span class="aj-check__mark">✓</span>Base técnica consultada</div>
+          <div class="aj-check aj-enter"><span class="aj-check__mark">✓</span>Problemas comuns verificados</div>
+          <div class="aj-check aj-enter"><span class="aj-check__mark">✓</span>Estimativa calculada</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. HIPÓTESE -->
+    <p class="aj-msg-ai" id="hip1" hidden
+       data-aj-type="Esse tec-tec que aparece só quando você vira o volante pra manobrar tem cara de junta homocinética — é a peça que leva a força do motor pra roda e aguenta a roda girar torta. Quando a borracha que protege ela resseca, entra sujeira e ela começa a estalar exatamente nesse movimento."></p>
+    <p class="aj-msg-ai" id="hip2" hidden
+       data-aj-type="Em HB20 dessa idade é das coisas mais comuns que aparecem por aqui, principalmente em carro de cidade que manobra muito."></p>
+    <p class="t2-ai-note" id="hip3" hidden>É uma hipótese, não um veredito — quem fecha o diagnóstico é o mecânico com o carro na mão. Serve pra você chegar lá sabendo do que se trata.</p>
+
+    <!-- 3. ORIENTAÇÃO IMEDIATA -->
+    <section class="aj-card aj-enter" id="orient" hidden>
+      <div class="aj-card__caps">Dá pra você mesmo checar</div>
+      <ol class="t2-steps">
+        <li>Com o carro parado e desligado, fique de pé de frente pra ele.</li>
+        <li>Olhe a roda dianteira direita, por trás — no espaço entre a roda e o meio do carro.</li>
+        <li>Procure graxa escura espirrada ali, ou a sanfoninha de borracha preta rasgada.</li>
+      </ol>
+      <div class="t2-safe">
+        <span>🛡️</span>
+        <span>É só olhar. Não precisa abrir, encostar nem mexer em nada do carro.</span>
+      </div>
+
+      <button class="t2-linkbtn" id="refBtn" type="button">
+        Ver imagem de referência <span class="t2-linkbtn__caret">▼</span>
+      </button>
+
+      <div class="t2-ref" id="ref">
+        <div class="t2-ref__frame">
+          <svg viewBox="0 0 300 150" role="img" aria-label="Ilustração de referência: roda dianteira direita vista por trás, com a coifa da junta homocinética e graxa espirrada">
+            <rect x="0" y="0" width="300" height="150" fill="#F4F7FC"/>
+            <!-- chão -->
+            <line x1="10" y1="132" x2="290" y2="132" stroke="#E2E8F0" stroke-width="2"/>
+            <!-- para-lama / carroceria -->
+            <path d="M188 24 q66 0 78 46 l0 40 -78 0 z" fill="#E7EDF4"/>
+            <text x="232" y="60" font-family="Inter, sans-serif" font-size="9" fill="#94A3B8" text-anchor="middle">carro</text>
+            <!-- pneu -->
+            <circle cx="112" cy="86" r="46" fill="#2D3748"/>
+            <circle cx="112" cy="86" r="24" fill="#CBD5E1"/>
+            <circle cx="112" cy="86" r="7" fill="#94A3B8"/>
+            <!-- semieixo -->
+            <rect x="136" y="80" width="52" height="12" rx="6" fill="#94A3B8"/>
+            <!-- coifa (sanfona) -->
+            <path d="M150 74 l6 -5 6 5 6 -5 6 5 6 -5 6 5 0 24 -6 5 -6 -5 -6 5 -6 -5 -6 5 -6 -5 z" fill="#052577"/>
+            <!-- graxa espirrada -->
+            <circle cx="150" cy="112" r="4" fill="#E07A00"/>
+            <circle cx="160" cy="120" r="3" fill="#E07A00"/>
+            <circle cx="141" cy="121" r="2.5" fill="#E07A00"/>
+            <!-- callouts -->
+            <line x1="166" y1="66" x2="176" y2="38" stroke="#052577" stroke-width="1.5"/>
+            <circle cx="176" cy="34" r="3" fill="#052577"/>
+            <text x="182" y="37" font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="#052577">a sanfoninha</text>
+            <line x1="152" y1="116" x2="120" y2="140" stroke="#9A4A00" stroke-width="1.5"/>
+            <text x="116" y="146" font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="#9A4A00" text-anchor="end">graxa</text>
+          </svg>
+        </div>
+        <p class="t2-ref__cap">Ilustração de referência — roda dianteira direita vista por trás. A sanfoninha preta é a coifa; se ela estiver rasgada, a graxa escapa e suja tudo em volta.</p>
+      </div>
+
+      <div class="t2-replies" id="replies">
+        <button class="t2-reply" type="button" data-branch="sim">Sim, tem</button>
+        <button class="t2-reply" type="button" data-branch="nao">Não sei onde olhar</button>
+      </div>
+    </section>
+
+    <!-- resposta do cliente + fala da IA (ramo escolhido) -->
+    <div class="aj-msg-user" id="userAnswer" hidden></div>
+    <p class="aj-msg-ai" id="branch1" hidden></p>
+    <p class="aj-msg-ai" id="branch2" hidden></p>
+
+    <!-- 4. ESTIMATIVA -->
+    <section class="aj-card aj-enter" id="estimativa" hidden>
+      <div class="aj-card__caps">Estimativa Auto Justo</div>
+
+      <div class="t2-est-line">
+        <div class="t2-est-line__label">Peça<small>Junta homocinética — HB20 2018</small></div>
+        <div class="t2-est-line__val">R$ 120 a R$ 200</div>
+      </div>
+      <div class="t2-est-line">
+        <div class="t2-est-line__label">Mão de obra<small>Média da zona sul, SP</small></div>
+        <div class="t2-est-line__val">R$ 150 a R$ 250</div>
+      </div>
+
+      <div class="t2-divider"></div>
+
+      <div class="t2-est-total">
+        <div class="t2-est-total__label">Total estimado</div>
+        <div class="t2-est-total__val">R$ 270 a R$ 450</div>
+      </div>
+
+      <p class="t2-est-note">Esse valor pode mudar depois da avaliação presencial — é uma referência pra você comparar orçamentos, não um preço fechado.</p>
+    </section>
+
+    <!-- 5. PRÓXIMO PASSO -->
+    <p class="aj-msg-ai" id="fecho" hidden></p>
+
+    <section class="aj-card aj-enter" id="acao" hidden>
+      <button class="aj-btn" type="button" id="btnOficinas" data-aj-go="T03-oficinas.html">Ver oficinas perto de mim</button>
+      <button class="t2-share" type="button" id="btnShare">📤 Mandar isso pro meu pai no WhatsApp</button>
+    </section>
+
+    <div class="t2-next" id="next" hidden>Continua em T-03 Oficinas →</div>
+
+  </main>
+
+  <button class="t2-replay" type="button" id="replay">↻ replay</button>
+
+  <div class="aj-input">
+    <input class="aj-input__field" type="text" placeholder="Mensagem" aria-label="Mensagem">
+    <button class="aj-input__send" type="button" aria-label="Enviar">↑</button>
+  </div>
+
+</div>
+
+<script src="aj.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var scroll   = $('scroll');
+  var progresso= $('progresso');
+  var thinking = $('thinking');
+  var checklist= $('checklist');
+  var orient   = $('orient');
+  var replies  = $('replies');
+  var refBtn   = $('refBtn');
+  var refBox   = $('ref');
+  var estim    = $('estimativa');
+  var acao     = $('acao');
+  var next     = $('next');
+
+  var BRANCHES = {
+    sim: {
+      label: 'Sim, tem graxa ali',
+      falas: [
+        'Boa — graxa espirrada por ali é justamente o sinal de que a coifa rasgou e a junta ficou desprotegida. Isso reforça bastante a hipótese.',
+        'Não é motivo pra parar o carro agora, mas também não é de deixar pra depois: rodando assim a junta desgasta rápido e o conserto sai bem mais caro. Semana que vem já é uma boa hora.'
+      ]
+    },
+    nao: {
+      label: 'Não sei onde olhar',
+      falas: [
+        'Sem problema, é bem escondido mesmo. Deixei a ilustração aberta aí em cima: é a roda da frente do lado do carona, olhando por trás dela, na direção do meio do carro.',
+        'E se preferir, pode pular essa parte sem prejuízo nenhum — qualquer mecânico confere isso em dois minutos com o carro no elevador. A estimativa abaixo vale do mesmo jeito.'
+      ]
+    }
+  };
+
+  function show(el) { el.hidden = false; }
+  function down()   { AJ.scrollDown(scroll); }
+
+  function type(el, text) {
+    show(el); down();
+    return AJ.typeText(el, text).then(down);
+  }
+
+  function enter(el) {
+    show(el);
+    return AJ.reveal([el], 0).then(function () { return AJ.wait(60); }).then(down);
+  }
+
+  function fade(el) { show(el); down(); return AJ.wait(240); }
+
+  function setRef(open) {
+    refBox.classList.toggle('is-open', open);
+    refBtn.classList.toggle('is-open', open);
+    refBtn.firstChild.nodeValue = open ? 'Esconder imagem de referência ' : 'Ver imagem de referência ';
+  }
+
+  refBtn.addEventListener('click', function () {
+    setRef(!refBox.classList.contains('is-open'));
+    setTimeout(down, 420);
+  });
+
+  /* --- ramos da orientação --- */
+  function pick(branch, btn) {
+    if (replies.classList.contains('is-locked')) return;
+    replies.classList.add('is-locked');
+    btn.classList.add('is-picked');
+
+    var b = BRANCHES[branch];
+    if (branch === 'nao') setRef(true);
+
+    var ua = $('userAnswer');
+    ua.textContent = b.label;
+    show(ua); down();
+
+    AJ.wait(520)
+      .then(function () { return type($('branch1'), b.falas[0]); })
+      .then(function () { return AJ.wait(320); })
+      .then(function () { return type($('branch2'), b.falas[1]); })
+      .then(function () { return AJ.wait(420); })
+      .then(function () { return enter(estim); })
+      .then(function () { return AJ.wait(520); })
+      .then(function () {
+        return type($('fecho'), 'Já separei oficinas perto de você que fazem esse serviço e são bem avaliadas em suspensão e direção. Quer ver?');
+      })
+      .then(function () { return AJ.wait(240); })
+      .then(function () { return enter(acao); })
+      .then(function () { return fade(next); });
+  }
+
+  Array.prototype.forEach.call(replies.querySelectorAll('.t2-reply'), function (btn) {
+    btn.addEventListener('click', function () { pick(btn.getAttribute('data-branch'), btn); });
+  });
+
+  $('btnOficinas').addEventListener('click', function () { $('btnOficinas').textContent = 'Abrindo T-03 Oficinas…'; });
+  $('btnShare').addEventListener('click', function () { $('btnShare').textContent = '✓ Resumo pronto pra enviar'; });
+
+  /* --- roteiro --- */
+  function reset() {
+    ['progresso','hip1','hip2','hip3','orient','userAnswer','branch1','branch2','estimativa','fecho','acao','next']
+      .forEach(function (id) { $(id).hidden = true; });
+    Array.prototype.forEach.call(document.querySelectorAll('.aj-enter'), function (el) { el.classList.remove('is-in'); });
+    thinking.classList.remove('is-done');
+    replies.classList.remove('is-locked');
+    Array.prototype.forEach.call(replies.querySelectorAll('.t2-reply'), function (b) { b.classList.remove('is-picked'); });
+    setRef(false);
+    $('hip1').textContent = '';
+    $('hip2').textContent = '';
+    $('branch1').textContent = '';
+    $('branch2').textContent = '';
+    $('fecho').textContent = '';
+    $('btnOficinas').textContent = 'Ver oficinas perto de mim';
+    $('btnShare').textContent = '📤 Mandar isso pro meu pai no WhatsApp';
+    scroll.scrollTop = 0;
+  }
+
+  function run() {
+    reset();
+    AJ.wait(600)
+      .then(function () { show(progresso); down(); return AJ.runChecklist(checklist, 620); })
+      .then(function () { return AJ.wait(500); })
+      .then(function () { thinking.classList.add('is-done'); return AJ.wait(300); })
+      .then(function () { return type($('hip1')); })
+      .then(function () { return AJ.wait(360); })
+      .then(function () { return type($('hip2')); })
+      .then(function () { return AJ.wait(240); })
+      .then(function () { return fade($('hip3')); })
+      .then(function () { return AJ.wait(360); })
+      .then(function () { return enter(orient); });
+  }
+
+  $('replay').addEventListener('click', run);
+  run();
+})();
+</script>
+</body>
+</html>

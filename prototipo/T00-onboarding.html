@@ -192,6 +192,10 @@
   var seal    = document.getElementById('seal');
   var bar     = document.getElementById('inputbar');
   var PLATE   = 'GDA5H72';
+  /* Marca se a leitura partiu de uma foto escolhida pela pessoa. A extração é
+     roteirizada: anunciar com convicção um carro que não é o dela quebraria a
+     confiança justamente na tela que promete transparência. */
+  var fotoDoUsuario = false;
   var run     = 0;                       /* invalida roteiros antigos no replay */
 
   /* ---------- utilitários ---------- */
@@ -247,24 +251,65 @@
       .catch(swallow);
   }
 
+  /* Foto de exemplo: um CRLV desenhado, usado quando ninguém escolhe imagem.
+     Desenhado e não fotografado de propósito — um CRLV real traz CPF, RENAVAM
+     e endereço do proprietário, e este protótipo existe para ser mostrado. */
+  var FOTO_EXEMPLO = '<svg class="t0-foto__img" viewBox="0 0 240 170" role="img" aria-label="Foto do CRLV do Hyundai HB20 2018, placa GDA5H72"><defs><linearGradient id="mesa" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3C4657"/><stop offset="1" stop-color="#222A38"/></linearGradient><linearGradient id="papel" x1="0" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#FFFDF6"/><stop offset="1" stop-color="#E8E2D4"/></linearGradient><filter id="sombra" x="-20%" y="-20%" width="150%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity=".45"/></filter></defs><rect width="240" height="170" fill="url(#mesa)"/><g transform="rotate(-3.2 120 85)" filter="url(#sombra)"><rect x="26" y="20" width="188" height="130" rx="3" fill="url(#papel)"/><rect x="26" y="20" width="188" height="17" rx="3" fill="#1F6B3A"/><text x="34" y="32" font-family="Helvetica,Arial,sans-serif" font-size="6.4" font-weight="700" fill="#EAF5EC" letter-spacing=".35">CERTIFICADO DE REGISTRO E LICENCIAMENTO</text><text x="34" y="49" font-family="Helvetica,Arial,sans-serif" font-size="5" fill="#8C8778" letter-spacing=".5">PLACA</text><rect x="33" y="52" width="62" height="20" rx="2.5" fill="#F3F1E8" stroke="#B9B3A2"/><rect x="33" y="52" width="62" height="6" rx="2.5" fill="#2B4C9B"/><text x="64" y="68" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="10.5" font-weight="700" fill="#23262B" letter-spacing="1.1">GDA5H72</text><text x="106" y="49" font-family="Helvetica,Arial,sans-serif" font-size="5" fill="#8C8778" letter-spacing=".5">MARCA / MODELO</text><text x="106" y="60" font-family="Helvetica,Arial,sans-serif" font-size="7.6" font-weight="600" fill="#33373D">HYUNDAI HB20</text><text x="106" y="70" font-family="Helvetica,Arial,sans-serif" font-size="6.4" fill="#5C6067">1.0 COMFORT PLUS</text><text x="34" y="86" font-family="Helvetica,Arial,sans-serif" font-size="5" fill="#8C8778" letter-spacing=".5">ANO FAB / MOD</text><text x="34" y="96" font-family="Helvetica,Arial,sans-serif" font-size="7.2" font-weight="600" fill="#33373D">2017 / 2018</text><g fill="#C6C0AE"><rect x="106" y="82" width="82" height="3.4" rx="1.7"/><rect x="106" y="90" width="66" height="3.4" rx="1.7"/><rect x="34" y="106" width="152" height="3.4" rx="1.7"/><rect x="34" y="114" width="128" height="3.4" rx="1.7"/><rect x="34" y="122" width="140" height="3.4" rx="1.7"/></g><rect x="150" y="112" width="52" height="26" rx="2" fill="#EFEADA" stroke="#CFC8B4"/><text x="176" y="128" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="5.4" fill="#9A9484">QR</text><path d="M26 20 L104 20 L52 150 L26 150 Z" fill="#fff" opacity=".13"/></g></svg>';
+
   function captureCard() {
     var card = push(
       '<div class="aj-card">' +
         '<div class="aj-card__caps">Documento do carro</div>' +
         '<div class="t0-capture">' +
-          '<div class="t0-capture__icon">📄</div>' +
-          '<div class="t0-capture__hint">Aponte a câmera para o CRLV.<br>Pode estar amassado — eu dou conta.</div>' +
+          '<div class="t0-capture__icon">\ud83d\udcc4</div>' +
+          '<div class="t0-capture__hint">Aponte a c\u00e2mera para o CRLV.<br>Pode estar amassado \u2014 eu dou conta.</div>' +
         '</div>' +
+        '<input type="file" accept="image/*" capture="environment" data-act="arquivo" hidden>' +
         '<button class="aj-btn" data-act="foto">Tirar foto do documento</button>' +
         '<button class="t0-link" data-act="placa">Prefiro digitar a placa</button>' +
       '</div>'
     );
-    card.querySelector('[data-act="foto"]').onclick = function () {
+
+    var seletor = card.querySelector('[data-act="arquivo"]');
+    var resolvido = false;
+
+    /* Um caminho só de saída, venha a imagem da câmera ou do exemplo. */
+    function enviar(htmlDaImagem, ehDoUsuario) {
+      if (resolvido) return;
+      resolvido = true;
+      fotoDoUsuario = !!ehDoUsuario;
       spend(card);
-      // Mostra a foto que o cliente acabou de tirar, como num app de mensagem.
-      user('<svg class="t0-foto__img" viewBox="0 0 240 170" role="img" aria-label="Foto do CRLV do Hyundai HB20 2018, placa GDA5H72"><defs><linearGradient id="mesa" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3C4657"/><stop offset="1" stop-color="#222A38"/></linearGradient><linearGradient id="papel" x1="0" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#FFFDF6"/><stop offset="1" stop-color="#E8E2D4"/></linearGradient><filter id="sombra" x="-20%" y="-20%" width="150%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity=".45"/></filter></defs><rect width="240" height="170" fill="url(#mesa)"/><g transform="rotate(-3.2 120 85)" filter="url(#sombra)"><rect x="26" y="20" width="188" height="130" rx="3" fill="url(#papel)"/><rect x="26" y="20" width="188" height="17" rx="3" fill="#1F6B3A"/><text x="34" y="32" font-family="Helvetica,Arial,sans-serif" font-size="6.4" font-weight="700" fill="#EAF5EC" letter-spacing=".35">CERTIFICADO DE REGISTRO E LICENCIAMENTO</text><text x="34" y="49" font-family="Helvetica,Arial,sans-serif" font-size="5" fill="#8C8778" letter-spacing=".5">PLACA</text><rect x="33" y="52" width="62" height="20" rx="2.5" fill="#F3F1E8" stroke="#B9B3A2"/><rect x="33" y="52" width="62" height="6" rx="2.5" fill="#2B4C9B"/><text x="64" y="68" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="10.5" font-weight="700" fill="#23262B" letter-spacing="1.1">GDA5H72</text><text x="106" y="49" font-family="Helvetica,Arial,sans-serif" font-size="5" fill="#8C8778" letter-spacing=".5">MARCA / MODELO</text><text x="106" y="60" font-family="Helvetica,Arial,sans-serif" font-size="7.6" font-weight="600" fill="#33373D">HYUNDAI HB20</text><text x="106" y="70" font-family="Helvetica,Arial,sans-serif" font-size="6.4" fill="#5C6067">1.0 COMFORT PLUS</text><text x="34" y="86" font-family="Helvetica,Arial,sans-serif" font-size="5" fill="#8C8778" letter-spacing=".5">ANO FAB / MOD</text><text x="34" y="96" font-family="Helvetica,Arial,sans-serif" font-size="7.2" font-weight="600" fill="#33373D">2017 / 2018</text><g fill="#C6C0AE"><rect x="106" y="82" width="82" height="3.4" rx="1.7"/><rect x="106" y="90" width="66" height="3.4" rx="1.7"/><rect x="34" y="106" width="152" height="3.4" rx="1.7"/><rect x="34" y="114" width="128" height="3.4" rx="1.7"/><rect x="34" y="122" width="140" height="3.4" rx="1.7"/></g><rect x="150" y="112" width="52" height="26" rx="2" fill="#EFEADA" stroke="#CFC8B4"/><text x="176" y="128" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="5.4" fill="#9A9484">QR</text><path d="M26 20 L104 20 L52 150 L26 150 Z" fill="#fff" opacity=".13"/></g></svg><div class="t0-foto__cap">📎 CRLV · agora</div>').classList.add('t0-foto');
+      user(htmlDaImagem + '<div class="t0-foto__cap">\ud83d\udcce CRLV \u00b7 agora</div>')
+        .classList.add('t0-foto');
       lerDocumento('foto');
+    }
+
+    seletor.onchange = function () {
+      var arquivo = seletor.files && seletor.files[0];
+      if (!arquivo) return;
+      var url = URL.createObjectURL(arquivo);
+      // A imagem fica só neste navegador: nada é enviado para servidor algum.
+      enviar('<img class="t0-foto__img t0-foto__img--real" src="' + url +
+             '" alt="Foto do documento enviada por voc\u00ea">', true);
     };
+
+    /* Fechar o seletor sem escolher nada não pode travar o cadastro: cai na
+       foto de exemplo. Nem todo navegador dispara "cancel", então a volta do
+       foco à janela serve de rede. */
+    function semEscolha() {
+      setTimeout(function () {
+        if (!resolvido && !(seletor.files && seletor.files.length)) {
+          enviar(FOTO_EXEMPLO, false);
+        }
+      }, 500);
+    }
+    seletor.addEventListener('cancel', semEscolha);
+
+    card.querySelector('[data-act="foto"]').onclick = function () {
+      window.addEventListener('focus', semEscolha, { once: true });
+      seletor.click();
+    };
+
     card.querySelector('[data-act="placa"]').onclick = function () {
       spend(card);
       user('Prefiro digitar a placa');
@@ -356,6 +401,9 @@
           '<div class="t0-data"><span class="t0-data__k">Modelo</span><span class="t0-data__v">Hyundai HB20<small>1.0 Comfort Plus</small></span></div>' +
           '<div class="t0-data"><span class="t0-data__k">Ano</span><span class="t0-data__v">2018</span></div>' +
           '<div class="t0-data"><span class="t0-data__k">Renavam</span><span class="t0-data__v">•••••••472</span></div>' +
+          (fotoDoUsuario
+            ? '<span class="t0-demo">Dados de demonstra\u00e7\u00e3o. Este prot\u00f3tipo ainda n\u00e3o l\u00ea a imagem enviada.</span>'
+            : '') +
         '</div>'
       );
       return AJ.wait(320);

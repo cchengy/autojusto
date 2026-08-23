@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/auto-justo/"
+title = "Auto Justo Web"
+description = "Camada web publicável que apresenta o aplicativo Auto Justo trazido do GitHub."
+version = "1.0.0"
+id = "artifacts/auto-justo-web"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/auto-justo/" ]
+localPort = 25543
+
+[services.development]
+run = "pnpm --filter @workspace/auto-justo-web run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/auto-justo-web", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/auto-justo-web/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25543"
+BASE_PATH = "/auto-justo/"

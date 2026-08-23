@@ -155,15 +155,21 @@
   <div class="aj-statusbar"><span>9:41</span><span>▮▮▮ ▾</span></div>
 
   <header class="aj-header">
+    <button class="aj-header__back" type="button" aria-label="Voltar" data-aj-go="T01-chat.html">‹</button>
     <div class="aj-header__avatar" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">AJ</div>
-    <div class="aj-header__name" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">Auto Justo</div>
+    <div class="aj-header__id">
+      <div class="aj-header__name" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">Auto Justo</div>
+      <div class="aj-header__status">Online</div>
+    </div>
     <button class="t0-replay" id="replay" title="Reiniciar demo">↻ replay</button>
   </header>
 
   <main class="aj-scroll" id="scroll"></main>
 
   <div class="aj-input is-off" id="inputbar">
+    <button class="aj-input__icon" type="button" aria-label="Enviar foto">📷</button>
     <input class="aj-input__field" placeholder="Mensagem" disabled>
+    <button class="aj-input__icon" type="button" aria-label="Gravar audio">🎤</button>
     <button class="aj-input__send" disabled>↑</button>
   </div>
 

@@ -63,7 +63,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #cbd5e1;               /* moldura fora do device */
+  background: var(--aj-blue);        /* moldura fora do device */
   font-family: var(--aj-font);
   color: var(--aj-ai-text);
   -webkit-font-smoothing: antialiased;
@@ -97,12 +97,38 @@ html, body {
 }
 
 /* Header mínimo: avatar + nome + contexto à direita */
+/* Barra sólida em navy, no padrão de aplicativo de mensagem: seta de voltar,
+   identidade, estado e menu. Familiaridade importa mais que originalidade aqui
+   — o público descrito na pesquisa vive no WhatsApp. */
 .aj-header {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: var(--aj-3);
-  padding: var(--aj-2) var(--aj-5) var(--aj-4);
+  padding: var(--aj-3) var(--aj-4);
+  background: var(--aj-navy);
+  color: #fff;
+}
+.aj-header__back,
+.aj-header__menu {
+  border: 0; background: transparent; padding: 0;
+  color: rgba(255,255,255,.86);
+  font-size: var(--aj-fs-lg);
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.aj-header__menu { margin-left: auto; }
+.aj-header__id { min-width: 0; }
+.aj-header__status {
+  display: flex; align-items: center; gap: 5px;
+  font-size: var(--aj-fs-caps);
+  color: rgba(255,255,255,.72);
+  margin-top: 1px;
+}
+.aj-header__status::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--aj-success);
 }
 .aj-header__avatar {
   width: 32px; height: 32px;
@@ -112,16 +138,16 @@ html, body {
   font-size: 0;                      /* o texto "AJ" fica só para leitor de tela */
   color: transparent;
 }
-.aj-header__name { font-size: var(--aj-fs-body); font-weight: 600; }
+.aj-header__name { font-size: var(--aj-fs-body); font-weight: 600; color: #fff; }
 .aj-header__ctx {
   margin-left: auto;
   font-size: var(--aj-fs-sm);
   padding: var(--aj-1) var(--aj-3);
   border-radius: var(--aj-r-pill);
-  background: rgba(248,198,19,.18);
-  border: 1px solid rgba(248,198,19,.55);
+  background: rgba(248,198,19,.92);
+  border: 0;
   color: var(--aj-yellow-ink);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Área rolável da conversa/conteúdo */
@@ -148,13 +174,32 @@ html, body {
   font-size: var(--aj-fs-body);
   line-height: var(--aj-lh-body);
 }
-.aj-msg-ai {                      /* SEM bolha — texto solto no fundo */
+/* Bolha branca à esquerda, com o ícone da marca ao lado. O avatar aparece só
+   na última fala de uma sequência, como num aplicativo de mensagem, para não
+   repetir a mesma imagem em cada linha. */
+.aj-msg-ai {
+  position: relative;
   align-self: flex-start;
-  max-width: 92%;
+  max-width: 84%;
+  margin-left: 38px;
+  background: var(--aj-surface);
+  border: 1px solid var(--aj-border);
+  border-radius: var(--aj-r-bubble);
+  border-bottom-left-radius: var(--aj-2);
+  padding: var(--aj-3) var(--aj-4);
   color: var(--aj-ai-text);
   font-size: var(--aj-fs-body);
   line-height: var(--aj-lh-body);
+  box-shadow: 0 1px 2px rgba(5,37,119,.06);
 }
+.aj-msg-ai::before {
+  content: "";
+  position: absolute; left: -38px; bottom: 0;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--aj-logo) center / cover no-repeat;
+}
+.aj-msg-ai:has(+ .aj-msg-ai)::before { opacity: 0; }
 
 /* --- Card inline --- */
 .aj-card {
@@ -242,12 +287,24 @@ html, body {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: var(--aj-2);
-  padding: var(--aj-3) var(--aj-5) var(--aj-6);
+  gap: var(--aj-3);
+  padding: var(--aj-3) var(--aj-4) var(--aj-5);
+  background: var(--aj-surface);
+  border-top: 1px solid var(--aj-border);
+}
+/* Câmera e microfone: a pesquisa mostra gente que não sabe nomear o defeito,
+   então mandar foto ou áudio precisa estar à mão, não escondido num menu. */
+.aj-input__icon {
+  border: 0; background: transparent; padding: 0;
+  color: var(--aj-text-2);
+  font-size: var(--aj-fs-lg);
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
 }
 .aj-input__field {
   flex: 1 1 auto;
-  background: var(--aj-surface);
+  background: var(--aj-bg);
   border: 1px solid var(--aj-border);
   border-radius: var(--aj-r-pill);
   padding: var(--aj-4) var(--aj-5);
@@ -257,12 +314,15 @@ html, body {
   outline: none;
 }
 .aj-input__field::placeholder { color: var(--aj-text-2); }
+/* Enviar em amarelo: é a ação mais repetida do app e o único lugar onde o
+   acento da marca aparece o tempo todo. */
 .aj-input__send {
-  width: 48px; height: 48px; flex: 0 0 48px;
+  width: 44px; height: 44px; flex: 0 0 44px;
   border: 0; border-radius: var(--aj-r-pill);
-  background: var(--aj-accent);
-  color: #fff;
+  background: var(--aj-yellow);
+  color: var(--aj-navy);
   font-size: var(--aj-fs-lg);
+  font-weight: 700;
   cursor: pointer;
   display: grid; place-items: center;
 }
@@ -382,3 +442,10 @@ html, body {
   overflow: hidden;
   white-space: nowrap;
 }
+
+/* Valor estimado: o número que a pessoa procura na tela. Amarelo escuro para
+   destacar sem perder contraste sobre o card branco. */
+.aj-total { color: var(--aj-yellow-ink); font-weight: 700; }
+
+/* Confirmação de escolha em verde, separado das ações azuis de navegação. */
+.aj-btn--confirm { background: var(--aj-success); color: #fff; }

@@ -200,10 +200,15 @@
 <div class="aj-statusbar"><span>9:41</span><span>▮▮▮ ▾</span></div>
 
 <header class="aj-header">
-  <div class="aj-header__avatar" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">AJ</div>
-  <div class="aj-header__name" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">Auto Justo</div>
+  <button class="aj-header__back" type="button" aria-label="Voltar" data-aj-go="T01-chat.html">‹</button>
+    <div class="aj-header__avatar" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">AJ</div>
+    <div class="aj-header__id">
+      <div class="aj-header__name" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">Auto Justo</div>
+      <div class="aj-header__status">Online</div>
+    </div>
   <div class="aj-header__ctx" id="ctx">🚗 HB20 2018</div>
-</header>
+    <button class="aj-header__menu" type="button" aria-label="Mais opções">⋮</button>
+  </header>
 
 <div class="t-topbar">
   <button type="button" class="t-replay" id="replay">↻ replay</button>
@@ -232,7 +237,9 @@
 </main>
 
 <footer class="aj-input">
-  <input class="aj-input__field" id="field" placeholder="Mensagem" autocomplete="off">
+  <button class="aj-input__icon" type="button" aria-label="Enviar foto">📷</button>
+    <input class="aj-input__field" id="field" placeholder="Mensagem" autocomplete="off">
+  <button class="aj-input__icon" type="button" aria-label="Gravar audio">🎤</button>
   <button type="button" class="aj-input__send" id="send">↑</button>
 </footer>
 </div>

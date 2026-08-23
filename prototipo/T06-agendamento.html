@@ -251,9 +251,14 @@
   </div>
 
   <header class="aj-header">
+    <button class="aj-header__back" type="button" aria-label="Voltar" data-aj-go="T01-chat.html">‹</button>
     <div class="aj-header__avatar" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">AJ</div>
-    <div class="aj-header__name" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">Auto Justo</div>
+    <div class="aj-header__id">
+      <div class="aj-header__name" data-aj-go="T01-chat.html" role="link" tabindex="0" title="Voltar para a conversa">Auto Justo</div>
+      <div class="aj-header__status">Online</div>
+    </div>
     <div class="aj-header__ctx">HB20 2018</div>
+    <button class="aj-header__menu" type="button" aria-label="Mais opções">⋮</button>
   </header>
 
   <main class="aj-scroll" id="scroll">
@@ -342,7 +347,9 @@
   </main>
 
   <div class="aj-input">
+    <button class="aj-input__icon" type="button" aria-label="Enviar foto">📷</button>
     <input class="aj-input__field" placeholder="Mensagem" aria-label="Mensagem">
+    <button class="aj-input__icon" type="button" aria-label="Gravar audio">🎤</button>
     <button class="aj-input__send" aria-label="Enviar">↑</button>
   </div>
 

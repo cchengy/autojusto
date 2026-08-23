@@ -145,10 +145,15 @@
 <body><div class="aj-device"><div class="aj-statusbar"><span>9:41</span><span>▮▮▮ ▾</span></div>
 
 <header class="aj-header">
-  <div class="aj-header__avatar">AJ</div>
-  <div class="aj-header__name">Auto Justo</div>
+  <button class="aj-header__back" type="button" aria-label="Voltar">‹</button>
+    <div class="aj-header__avatar">AJ</div>
+    <div class="aj-header__id">
+      <div class="aj-header__name">Auto Justo</div>
+      <div class="aj-header__status">Online</div>
+    </div>
   <div class="aj-header__ctx">🚗 HB20 2018</div>
-</header>
+    <button class="aj-header__menu" type="button" aria-label="Mais opções">⋮</button>
+  </header>
 
 <div class="t-topbar">
   <div class="t-seg" id="seg">
@@ -175,7 +180,7 @@
 </main>
 
 <footer class="aj-input t-stack">
-  <div class="t-attach aj-enter" id="attach" hidden>
+    <div class="t-attach aj-enter" id="attach" hidden>
     <div class="t-attach__caps">Como você quer contar</div>
     <div class="t-atts">
       <button type="button" class="t-att" id="attAudio"><b>🎤</b><i>Áudio</i></button>

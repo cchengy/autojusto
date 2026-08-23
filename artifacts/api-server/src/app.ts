@@ -61,7 +61,9 @@ if (prototipoDir) {
   // redirecionar em vez de servir o arquivo daqui: em "/telas" os links
   // relativos das telas resolveriam para "/T01-chat.html", fora do mount.
   app.get("/telas", (_req, res) => {
-    res.redirect(302, "/app/index.html");
+    // Relativo de propósito: resolve certo mesmo se o serviço for montado
+    // sob um prefixo pelo roteador do Replit.
+    res.redirect(302, "app/index.html");
   });
 
   logger.info({ prototipoDir }, "Protótipo servido em /app");

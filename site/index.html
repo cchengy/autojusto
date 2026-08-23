@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Auto Justo — confiança verificável em oficina mecânica</title>
 <meta name="description" content="Descreva o problema do carro em português comum. A IA levanta a hipótese, estima o custo com peça e mão de obra separadas e indica oficina verificada.">
-<link rel="icon" type="image/png" href="/app/assets/favicon.png">
-<!-- Fonte única da paleta: o mesmo tokens.css que o app usa, servido em /app -->
-<link rel="stylesheet" href="/app/tokens.css">
+<link rel="icon" type="image/png" href="app/assets/favicon.png">
+<!-- Fonte única da paleta: o mesmo tokens.css do app. Caminho relativo de
+     propósito: assim a landing funciona servida na raiz ou sob um prefixo. -->
+<link rel="stylesheet" href="app/tokens.css">
 <style>
   html, body { background: var(--aj-bg); }
   body { color: var(--aj-ink, var(--aj-ai-text)); }
@@ -179,7 +180,7 @@
   <div class="nav__in">
     <span class="nav__mark" role="img" aria-label="Logo Auto Justo"></span>
     <span class="aj-wordmark nav__word">Auto Justo</span>
-    <a class="btn nav__cta" href="/app">Entrar</a>
+    <a class="btn nav__cta" href="app/">Entrar</a>
   </div>
 </nav>
 
@@ -193,8 +194,8 @@
       e mão de obra separadas e te leva a uma oficina verificada. Depois, acompanha o pós-serviço.
     </p>
     <div class="hero__actions">
-      <a class="btn btn--lg" href="/app">Entrar no app</a>
-      <a class="btn btn--lg btn--ghost" href="/telas">Ver as 9 telas</a>
+      <a class="btn btn--lg" href="app/">Entrar no app</a>
+      <a class="btn btn--lg btn--ghost" href="telas">Ver as 9 telas</a>
     </div>
   </header>
 
@@ -273,14 +274,14 @@
         Nove telas navegáveis, do cadastro por foto do CRLV até o pós-serviço. Roda no navegador,
         sem instalar nada.
       </p>
-      <a class="btn btn--lg" href="/app">Entrar no app</a>
+      <a class="btn btn--lg" href="app/">Entrar no app</a>
     </div>
   </section>
 
   <footer>
     <span class="aj-wordmark footer__word">Auto Justo</span>
     <span>Protótipo de produto · dados de pesquisa em <code>docs/</code></span>
-    <span style="margin-left:auto"><a href="/telas">Índice das telas</a> · <a href="/api/healthz">API</a></span>
+    <span style="margin-left:auto"><a href="telas">Índice das telas</a> · <a href="api/healthz">API</a></span>
   </footer>
 
 </div>

@@ -47,3 +47,8 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Protótipo — visualizadores desktop, fora do app
+prototipo/index.html
+prototipo/autojusto-all-in-one.html
+prototipo/build-all-in-one.py

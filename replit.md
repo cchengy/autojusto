@@ -23,8 +23,8 @@ App mobile AI native que resolve a desconfiança entre motoristas e oficinas mec
 ## Where things live
 
 - `docs/` — fonte da verdade do produto. `autojusto_solucao_ai_native.md` (funcionalidades e jornada), `compilacao_pitch.md` (problema, público, mercado), `autojusto_prompt0_atualizado.md` (direção visual).
-- `prototipo/` — protótipo navegável em HTML/CSS/JS puro, sem dependência externa. `index.html` é o índice das 9 telas (T-00 a T-08); `tokens.css` tem a paleta e os componentes; `aj.js` tem as microinterações e a navegação entre telas.
-- `prototipo/autojusto-all-in-one.html` — as 9 telas num arquivo único autocontido, pra abrir sem servidor ou mandar por e-mail. Gerado por `prototipo/build-all-in-one.py`; regenere depois de mexer em qualquer tela.
+- `prototipo/` — as 9 telas do app (T-00 a T-08) em HTML/CSS/JS puro, sem dependência externa. `tokens.css` tem a paleta e os componentes; `aj.js` tem as microinterações e a navegação entre telas. Abra qualquer `T0*.html` direto no navegador.
+- Visualizadores de desktop — `index.html` (índice das telas), `autojusto-all-in-one.html` (as 9 telas num arquivo só) e `build-all-in-one.py` (gerador) — existem na sua cópia local mas estão no `.gitignore`. O repositório guarda só o app.
 - Ainda não implementado em código de produção: `lib/` e `artifacts/` seguem o scaffold do workspace.
 
 ## Architecture decisions
